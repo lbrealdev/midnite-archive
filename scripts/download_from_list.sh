@@ -22,9 +22,9 @@ if [[ ! -f "$CHANNEL_LIST_FILE" ]]; then
   exit 1
 fi
 
-YT_CHANNEL_LIST_FILE="$CHANNEL_LIST_FILE"
+YT_CHANNEL_LIST_FILE=$(readlink -f "$CHANNEL_LIST_FILE")
 
-printf "\nYouTube channel list: %s\n" "$YT_CHANNEL_LIST_FILE"
+printf "\nYouTube channel list path: %s\n" "$YT_CHANNEL_LIST_FILE"
 
 exit 1
 
