@@ -8,14 +8,14 @@ usage() {
   exit 1
 }
 
-echo "########################################"
-echo "     YouTube Channel Generator List     "
-echo "########################################"
-
 # Check if there enough arguments
 if [ "$#" -lt 1 ]; then
   usage
 fi
+
+echo "########################################"
+echo "     YouTube Channel Generator List     "
+echo "########################################"
 
 if [[ "$CHANNEL" =~ ^@ ]]; then
   CHANNEL="${CHANNEL//@}"
