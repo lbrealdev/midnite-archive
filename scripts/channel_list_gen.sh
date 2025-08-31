@@ -43,12 +43,12 @@ echo "Checking if $YT_CHANNEL_NAME directory exists..."
 
 if [[ ! -d "$YT_CHANNEL_NAME" ]]; then
   echo "The $YT_CHANNEL_NAME directory has been created."
-  mkdir "$YT_CHANNEL_NAME"
+  mkdir -p "$YT_CHANNEL_NAME/lists"
 fi
 
 echo "Fetching channel list..."
 
-cd "$YT_CHANNEL_NAME" || exit
+cd "$YT_CHANNEL_NAME/lists" || exit
 yt-dlp --flat-playlist --print "%(title)s-%(id)s" "https://www.youtube.com/${YT_CHANNEL_NAME/#/@}" > "$YT_CHANNEL_TITLE_OUTPUT_FILE"
 
 grep -oE '[A-Za-z0-9_-]{11}$' "$YT_CHANNEL_TITLE_OUTPUT_FILE" | sed "s|^|${YT_URL/%//watch?v=}|" > "$YT_CHANNEL_URL_OUTPUT_FILE"
