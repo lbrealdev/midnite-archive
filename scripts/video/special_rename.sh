@@ -21,22 +21,16 @@ INPUT_DIR="$1"
 
 if [[ -d "$INPUT_DIR" ]]; then
   cd "$INPUT_DIR" || exit
-
+  
   for file in *.description; do
-    cleaned_name="${file//⧸/_}"
-    cleaned_name=$(echo "$cleaned_name" | sed 's/[ /:：]/_/g')
 
-    [[ "$cleaned_name" == "$file" ]] && continue
+    [ ! -f "$file" ] && continue
 
-    if [[ -e "$cleaned_name" ]]; then
-      echo "File $cleaned_name already exists, skipping..."
-      continue
-    fi
+    newname=$(echo "$file" | sed 's/[ /:：⧸]/_/g')
     
-    # Debug
-    # echo "mv \"$file\" \"$secondary_special_char\""
-
-    mv "$file" "$cleaned_name"
-    echo "Renamed: $file → $cleaned_name"
+    if [[ "$newname" != "$file" ]]; then
+      mv "$file" "$newname"
+      echo "Renamed: $file → $newname"
+    fi
   done
 fi
