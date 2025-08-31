@@ -1,6 +1,6 @@
 #!/bin/bash
 
-CHANNEL_LIST_FILE="$1"
+CHANNEL_LIST_FILE_PATH="$1"
 
 usage() {
   echo "Usage: $0 <youtube-channel-file-path>"
@@ -17,20 +17,22 @@ echo "#            YouTube Script            #"
 echo "#         Channel List Download        #"
 echo "########################################"
 
-if [[ ! -f "$CHANNEL_LIST_FILE" ]]; then
-  echo "The file $CHANNEL_LIST_FILE was not found!"
+if [[ ! -f "$CHANNEL_LIST_FILE_PATH" ]]; then
+  echo "The file $CHANNEL_LIST_FILE_PATH was not found!"
   exit 1
 fi
 
-YT_CHANNEL_LIST_FILE=$(readlink -f "$CHANNEL_LIST_FILE")
+YT_CHANNEL_LIST_FILE_FULL_PATH=$(readlink -f "$CHANNEL_LIST_FILE_PATH")
 
-printf "\nYouTube channel list path: %s\n" "$YT_CHANNEL_LIST_FILE"
+printf "\nYouTube channel list path: %s\n" "$YT_CHANNEL_LIST_FILE_FULL_PATH"
+
+YT_CHANNEL_FILE_STEM=$(echo "$YT_CHANNEL_LIST_FILE_FULL_PATH" | grep -oP '[^/]+$')
+
+echo "$YT_CHANNEL_FILE_STEM"
 
 exit 1
 
 # -P '~/Desktop/yt-dlp-videos/videos/'
-
-YT_CHANNEL_DIRECTORY="${YT_CHANNEL_LIST_FILE%%-*}"
 
 echo "Checking if $YT_CHANNEL_DIRECTORY directory exists..."
 
