@@ -30,10 +30,6 @@ YT_CHANNEL_FILE_STEM=$(echo "$YT_CHANNEL_LIST_FILE_FULL_PATH" | grep -oP '[^/]+$
 
 YT_CHANNEL_DIRECTORY="${YT_CHANNEL_FILE_STEM%%-*}"
 
-echo "$YT_CHANNEL_DIRECTORY"
-
-exit 1
-
 # -P '~/Desktop/yt-dlp-videos/videos/'
 
 echo "Checking if $YT_CHANNEL_DIRECTORY directory exists..."
