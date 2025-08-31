@@ -1,0 +1,8 @@
+test.sh
+test.txt
+
+# YouTube files
+*.mkv
+*.description
+*.mp4
+*.mp3
