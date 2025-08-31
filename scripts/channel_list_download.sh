@@ -38,10 +38,8 @@ if [[ ! -d "$YT_CHANNEL_DIRECTORY/videos" ]]; then
 fi
 
 echo ""
-echo "Downloading from list..."
+echo "Downloading from $YT_CHANNEL_FILE_STEM list..."
 echo ""
-
-# cd "$YT_CHANNEL_DIRECTORY/videos" || exit
 
 YT_CHANNEL_DIRECTORY_FULL_PATH=$(realpath "$YT_CHANNEL_DIRECTORY/videos")
 yt-dlp -cw -o "%(title)s-%(id)s.%(ext)s" -P "$YT_CHANNEL_DIRECTORY_FULL_PATH" -a "$YT_CHANNEL_LIST_FILE_FULL_PATH" --embed-thumbnail --write-description --embed-metadata --no-colors
