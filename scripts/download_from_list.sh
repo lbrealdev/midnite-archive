@@ -3,7 +3,7 @@
 CHANNEL_LIST_FILE="$1"
 
 usage() {
-  echo "Usage: $0 <youtube-channel-list>.txt"
+  echo "Usage: $0 <youtube-channel-file-path>"
   exit 1
 }
 
@@ -13,8 +13,8 @@ if [ "$#" -lt 1 ]; then
 fi
 
 echo "########################################"
-echo "#             YouTube Script           #"
-echo "#          Channel List Download       #"
+echo "#            YouTube Script            #"
+echo "#         Channel List Download        #"
 echo "########################################"
 
 if [[ ! -f "$CHANNEL_LIST_FILE" ]]; then
@@ -25,6 +25,8 @@ fi
 YT_CHANNEL_LIST_FILE="$CHANNEL_LIST_FILE"
 
 printf "\nYouTube channel list: %s\n" "$YT_CHANNEL_LIST_FILE"
+
+exit 1
 
 # -P '~/Desktop/yt-dlp-videos/videos/'
 
