@@ -1,6 +1,6 @@
 # midnite-archive
 
-## Setup uv and yt-dlp
+## Setup
 
 // to do
 

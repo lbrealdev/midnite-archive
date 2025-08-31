@@ -27,7 +27,6 @@ YT_CHANNEL_LIST_FILE_FULL_PATH=$(realpath "$CHANNEL_LIST_FILE_PATH")
 printf "\nYouTube channel list path: %s\n" "$YT_CHANNEL_LIST_FILE_FULL_PATH"
 
 YT_CHANNEL_FILE_STEM=$(echo "$YT_CHANNEL_LIST_FILE_FULL_PATH" | grep -oP '[^/]+$')
-
 YT_CHANNEL_DIRECTORY="${YT_CHANNEL_FILE_STEM%%-*}"
 
 echo "Checking if videos download directory exists..."
