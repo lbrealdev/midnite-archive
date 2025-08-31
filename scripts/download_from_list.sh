@@ -43,6 +43,6 @@ echo "Downloading from list..."
 echo ""
 
 cd "$YT_CHANNEL_DIRECTORY/videos" || exit
-yt-dlp -cw -o "%(title)s-%(id)s.%(ext)s" -a "$YT_CHANNEL_LIST_FILE" --embed-thumbnail --write-description --embed-metadata
+yt-dlp -cw -o "%(title)s-%(id)s.%(ext)s" -a "$YT_CHANNEL_LIST_FILE_FULL_PATH" --embed-thumbnail --write-description --embed-metadata
 
 echo "Done!"
