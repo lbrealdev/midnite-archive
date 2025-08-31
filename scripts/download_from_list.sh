@@ -39,10 +39,10 @@ if [[ ! -d "$YT_CHANNEL_DIRECTORY/videos" ]]; then
   mkdir -p "$YT_CHANNEL_DIRECTORY/videos"
 fi
 
-# echo "Downloading from list..."
-# echo ""
+echo "Downloading from list..."
+echo ""
 
-# cd "$YT_CHANNEL_DIRECTORY/videos" || exit
-# yt-dlp -cw -o "%(title)s-%(id)s.%(ext)s" -a "$YT_CHANNEL_LIST_FILE" --embed-thumbnail --write-description --embed-metadata
+cd "$YT_CHANNEL_DIRECTORY/videos" || exit
+yt-dlp -cw -o "%(title)s-%(id)s.%(ext)s" -a "$YT_CHANNEL_LIST_FILE" --embed-thumbnail --write-description --embed-metadata
 
-# echo "Done!"
+echo "Done!"
