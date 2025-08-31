@@ -29,6 +29,11 @@ if [[ -d "$INPUT_DIR" ]]; then
     # Debug
     # echo "mv \"$file\" \"$secondary_special_char\""
 
+    if [[ -e "$secondary_special_char" ]]; then
+      echo "File $secondary_special_char already exist, skipping..."
+      continue
+    fi
+
     mv "$file" "$secondary_special_char"
   done
 fi
