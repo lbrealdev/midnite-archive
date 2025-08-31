@@ -32,14 +32,12 @@ YT_CHANNEL_DIRECTORY="${YT_CHANNEL_FILE_STEM%%-*}"
 
 # -P '~/Desktop/yt-dlp-videos/videos/'
 
-echo "Checking if $YT_CHANNEL_DIRECTORY directory exists..."
+echo "Checking if videos download directory exists..."
 
-if [[ ! -d "$YT_CHANNEL_DIRECTORY" ]]; then
+if [[ ! -d "$YT_CHANNEL_DIRECTORY/videos" ]]; then
   echo "The $YT_CHANNEL_DIRECTORY directory has been created."
   mkdir -p "$YT_CHANNEL_DIRECTORY/videos"
 fi
-
-pwd
 
 # echo "Downloading from list..."
 # echo ""
