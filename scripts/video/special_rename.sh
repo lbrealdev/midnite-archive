@@ -27,10 +27,7 @@ if [[ -d "$INPUT_DIR" ]]; then
     [ ! -f "$file" ] && continue
 
     newname=$(echo "$file" | sed 's/[ /:：⧸]/_/g')
-    
-    if [[ "$newname" != "$file" ]]; then
-      mv "$file" "$newname"
-      echo "Renamed: $file → $newname"
-    fi
+
+    mv "$file" "$newname"
   done
 fi
