@@ -28,8 +28,8 @@ if [[ -d "$INPUT_DIR" ]]; then
     # rm_special="${rm_fullwidth_colon/\//_}"
     # mv "$file" "$new_name"
     # echo "mv \"$file\" \"$rm_special\""
-    first_speacial_caracter="${file/⧸/_}"
-    second_special_caracter=$(echo "$first_speacial_caracter" | sed 's/[ /:：]/_/g')
-    echo "$second_special_caracter"
+    primary_special_char="${file/⧸/_}"
+    secondary_special_char=$(echo "$primary_special_char" | sed 's/[ /:：]/_/g')
+    echo "mv \"$file\" \"$secondary_special_char\""
   done
 fi
