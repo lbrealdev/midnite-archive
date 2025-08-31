@@ -41,7 +41,7 @@ echo ""
 
 echo "Checking if $YT_CHANNEL_NAME directory exists..."
 
-if [[ ! -d "$CHANNEL_LIST_FILE" ]]; then
+if [[ ! -d "$YT_CHANNEL_NAME" ]]; then
   echo "The $YT_CHANNEL_NAME directory has been created."
   mkdir "$YT_CHANNEL_NAME"
 fi
