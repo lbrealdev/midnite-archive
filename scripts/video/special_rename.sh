@@ -28,6 +28,6 @@ if [[ -d "$INPUT_DIR" ]]; then
     # rm_special="${rm_fullwidth_colon/\//_}"
     # mv "$file" "$new_name"
     # echo "mv \"$file\" \"$rm_special\""
-    echo "${file/\//_}"
+    echo "${file//\//_}"
   done
 fi
