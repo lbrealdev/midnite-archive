@@ -23,17 +23,20 @@ if [[ -d "$INPUT_DIR" ]]; then
   cd "$INPUT_DIR" || exit
 
   for file in *.description; do
-    primary_special_char="${file/⧸/_}"
-    secondary_special_char=$(echo "$primary_special_char" | sed 's/[ /:：]/_/g')
+    cleaned_name="${file//⧸/_}"
+    cleaned_name=$(echo "$cleaned_name" | sed 's/[ /:：]/_/g')
+
+    [[ "$cleaned_name" == "$file" ]] && continue
+
+    if [[ -e "$cleaned_name" ]]; then
+      echo "File $cleaned_name already exists, skipping..."
+      continue
+    fi
     
     # Debug
     # echo "mv \"$file\" \"$secondary_special_char\""
 
-    if [[ -e "$secondary_special_char" ]]; then
-      echo "File $secondary_special_char already exist, skipping..."
-      continue
-    fi
-
-    mv "$file" "$secondary_special_char"
+    mv "$file" "$cleaned_name"
+    echo "Renamed: $file → $cleaned_name"
   done
 fi
