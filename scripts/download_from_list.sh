@@ -28,7 +28,9 @@ printf "\nYouTube channel list path: %s\n" "$YT_CHANNEL_LIST_FILE_FULL_PATH"
 
 YT_CHANNEL_FILE_STEM=$(echo "$YT_CHANNEL_LIST_FILE_FULL_PATH" | grep -oP '[^/]+$')
 
-echo "$YT_CHANNEL_FILE_STEM"
+YT_CHANNEL_DIRECTORY="${YT_CHANNEL_FILE_STEM%%-*}"
+
+echo "$YT_CHANNEL_DIRECTORY"
 
 exit 1
 
