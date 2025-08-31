@@ -22,7 +22,7 @@ INPUT_DIR="$1"
 if [[ -d "$INPUT_DIR" ]]; then
   cd "$INPUT_DIR" || exit
   
-  for file in *.description; do
+  for file in *.mkv; do
 
     [ ! -f "$file" ] && continue
 
