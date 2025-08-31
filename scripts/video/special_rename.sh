@@ -24,8 +24,9 @@ if [[ -d "$INPUT_DIR" ]]; then
 
   for file in *.description; do
     # mv "$file" "${file// /_}"
-    new_name=$(echo "$file" | sed 's/[ /:：]/_/g')
+    rm_fullwidth_colon=$(echo "$file" | sed 's/[ /:：]/_/g')
+    rm_special=$(echo "$rm_fullwidth_colon" | sed 's/\//_/g')
     # mv "$file" "$new_name"
-    echo "mv \"$file\" \"$new_name\""
+    echo "mv \"$file\" \"$rm_special\""
   done
 fi
