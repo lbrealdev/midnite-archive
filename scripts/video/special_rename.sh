@@ -23,13 +23,12 @@ if [[ -d "$INPUT_DIR" ]]; then
   cd "$INPUT_DIR" || exit
 
   for file in *.description; do
-    # mv "$file" "${file// /_}"
-    # rm_fullwidth_colon=$(echo "$file" | sed 's/[ /:：]/_/g')
-    # rm_special="${rm_fullwidth_colon/\//_}"
-    # mv "$file" "$new_name"
-    # echo "mv \"$file\" \"$rm_special\""
     primary_special_char="${file/⧸/_}"
     secondary_special_char=$(echo "$primary_special_char" | sed 's/[ /:：]/_/g')
-    echo "mv \"$file\" \"$secondary_special_char\""
+    
+    # Debug
+    # echo "mv \"$file\" \"$secondary_special_char\""
+
+    mv "$file" "$secondary_special_char"
   done
 fi
