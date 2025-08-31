@@ -42,7 +42,6 @@ echo "Fetching channel list..."
 
 yt-dlp --flat-playlist --print "%(title)s-%(id)s" "https://www.youtube.com/${YT_CHANNEL_NAME/#/@}" >> "$YT_CHANNEL_TITLE_OUTPUT_FILE"
 
-# https://www.youtube.com/watch?v=
 grep -oE '[A-Za-z0-9_-]{11}$' "$YT_CHANNEL_TITLE_OUTPUT_FILE" | sed "s|^|${YT_URL/%//watch?v=}|" > "$YT_CHANNEL_URL_OUTPUT_FILE"
 
 echo "Done!"
