@@ -11,9 +11,11 @@ if [ "$#" -lt 1 ]; then
   usage
 fi
 
+echo ""
 echo "########################################"
 echo "#            Rename Script             #"
 echo "########################################"
+echo ""
 
 INPUT_DIR="$1"
 
