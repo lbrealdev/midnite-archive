@@ -3,9 +3,19 @@
 CHANNEL="$1"
 TIMESTAMP=$(date '+%Y%m%d%H%M%S')
 
+usage() {
+  echo "Usage: $0 <youtube-channel>"
+  exit 1
+}
+
 echo "########################################"
 echo "     YouTube Channel Generator List     "
 echo "########################################"
+
+# Check if there enough arguments
+if [ "$#" -lt 1 ]; then
+  usage
+fi
 
 if [[ "$CHANNEL" =~ ^@ ]]; then
   CHANNEL="${CHANNEL//@}"
