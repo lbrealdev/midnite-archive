@@ -14,7 +14,8 @@ if [ "$#" -lt 1 ]; then
 fi
 
 echo "########################################"
-echo "     YouTube Channel Generator List     "
+echo "#             YouTube Script           #"
+echo "#         Channel List Generator       #"
 echo "########################################"
 
 if [[ "$CHANNEL" =~ ^@ ]]; then
@@ -38,9 +39,15 @@ echo "YouTube Channel file (tile): $YT_CHANNEL_TITLE_OUTPUT_FILE"
 echo "YouTube Channel file (url): $YT_CHANNEL_URL_OUTPUT_FILE"
 echo ""
 
+echo "Checking if $YT_CHANNEL_NAME directory exists..."
+if [[ ! -d "$CHANNEL_LIST_FILE" ]]; then
+  echo "The $YT_CHANNEL_NAME directory has been created."
+fi
+
 echo "Fetching channel list..."
 
-yt-dlp --flat-playlist --print "%(title)s-%(id)s" "https://www.youtube.com/${YT_CHANNEL_NAME/#/@}" >> "$YT_CHANNEL_TITLE_OUTPUT_FILE"
+cd "$YT_CHANNEL_NAME" || exit
+yt-dlp --flat-playlist --print "%(title)s-%(id)s" "https://www.youtube.com/${YT_CHANNEL_NAME/#/@}" > "$YT_CHANNEL_TITLE_OUTPUT_FILE"
 
 grep -oE '[A-Za-z0-9_-]{11}$' "$YT_CHANNEL_TITLE_OUTPUT_FILE" | sed "s|^|${YT_URL/%//watch?v=}|" > "$YT_CHANNEL_URL_OUTPUT_FILE"
 

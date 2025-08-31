@@ -13,7 +13,8 @@ if [ "$#" -lt 1 ]; then
 fi
 
 echo "########################################"
-echo "     YouTube Channel Download List      "
+echo "#             YouTube Script           #"
+echo "#          Channel List Download       #"
 echo "########################################"
 
 if [[ ! -f "$CHANNEL_LIST_FILE" ]]; then
@@ -23,7 +24,7 @@ fi
 
 YT_CHANNEL_LIST_FILE="$CHANNEL_LIST_FILE"
 
-printf "\nYouTube channel list: %s\n" "$CHANNEL_LIST"
+printf "\nYouTube channel list: %s\n" "$YT_CHANNEL_LIST_FILE"
 
 # -P '~/Desktop/yt-dlp-videos/videos/'
 
