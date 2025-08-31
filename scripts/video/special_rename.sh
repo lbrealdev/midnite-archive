@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -euo pipefail
+set -x
 
 usage() {
   echo "Usage: $0 <directory>"
