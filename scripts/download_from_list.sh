@@ -28,9 +28,19 @@ printf "\nYouTube channel list: %s\n" "$YT_CHANNEL_LIST_FILE"
 
 # -P '~/Desktop/yt-dlp-videos/videos/'
 
+YT_CHANNEL_DIRECTORY="${YT_CHANNEL_LIST_FILE%%-*}"
+
+echo "Checking if $YT_CHANNEL_DIRECTORY directory exists..."
+
+if [[ ! -d "$YT_CHANNEL_DIRECTORY" ]]; then
+  echo "The $YT_CHANNEL_DIRECTORY directory has been created."
+  mkdir -p "$YT_CHANNEL_DIRECTORY/videos"
+fi
+
 echo "Downloading from list..."
 echo ""
 
+cd "$YT_CHANNEL_DIRECTORY/videos" || exit
 yt-dlp -cw -o "%(title)s-%(id)s.%(ext)s" -a "$YT_CHANNEL_LIST_FILE" --embed-thumbnail --write-description --embed-metadata
 
 echo "Done!"
