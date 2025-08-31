@@ -22,15 +22,13 @@ if [[ ! -f "$CHANNEL_LIST_FILE_PATH" ]]; then
   exit 1
 fi
 
-YT_CHANNEL_LIST_FILE_FULL_PATH=$(readlink -f "$CHANNEL_LIST_FILE_PATH")
+YT_CHANNEL_LIST_FILE_FULL_PATH=$(realpath "$CHANNEL_LIST_FILE_PATH")
 
 printf "\nYouTube channel list path: %s\n" "$YT_CHANNEL_LIST_FILE_FULL_PATH"
 
 YT_CHANNEL_FILE_STEM=$(echo "$YT_CHANNEL_LIST_FILE_FULL_PATH" | grep -oP '[^/]+$')
 
 YT_CHANNEL_DIRECTORY="${YT_CHANNEL_FILE_STEM%%-*}"
-
-# -P '~/Desktop/yt-dlp-videos/videos/'
 
 echo "Checking if videos download directory exists..."
 
@@ -39,11 +37,14 @@ if [[ ! -d "$YT_CHANNEL_DIRECTORY/videos" ]]; then
   mkdir -p "$YT_CHANNEL_DIRECTORY/videos"
 fi
 
+echo ""
 echo "Downloading from list..."
 echo ""
 
-cd "$YT_CHANNEL_DIRECTORY/videos" || exit
-yt-dlp -cw -o "%(title)s-%(id)s.%(ext)s" -a "$YT_CHANNEL_LIST_FILE_FULL_PATH" --embed-thumbnail --write-description --embed-metadata --no-colors
+# cd "$YT_CHANNEL_DIRECTORY/videos" || exit
+
+YT_CHANNEL_DIRECTORY_FULL_PATH=$(realpath "$YT_CHANNEL_DIRECTORY/videos")
+yt-dlp -cw -o "%(title)s-%(id)s.%(ext)s" -P "$YT_CHANNEL_DIRECTORY_FULL_PATH" -a "$YT_CHANNEL_LIST_FILE_FULL_PATH" --embed-thumbnail --write-description --embed-metadata --no-colors
 
 echo ""
 echo "Done!"
