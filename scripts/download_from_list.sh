@@ -39,6 +39,8 @@ if [[ ! -d "$YT_CHANNEL_DIRECTORY" ]]; then
   mkdir -p "$YT_CHANNEL_DIRECTORY/videos"
 fi
 
+pwd
+
 # echo "Downloading from list..."
 # echo ""
 
