@@ -40,8 +40,10 @@ echo "YouTube Channel file (url): $YT_CHANNEL_URL_OUTPUT_FILE"
 echo ""
 
 echo "Checking if $YT_CHANNEL_NAME directory exists..."
+
 if [[ ! -d "$CHANNEL_LIST_FILE" ]]; then
   echo "The $YT_CHANNEL_NAME directory has been created."
+  mkdir "$YT_CHANNEL_NAME"
 fi
 
 echo "Fetching channel list..."
