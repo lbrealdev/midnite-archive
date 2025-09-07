@@ -26,7 +26,7 @@ YT_CHANNEL_LIST_FILE_FULL_PATH=$(realpath "$CHANNEL_LIST_FILE_PATH")
 
 printf "\nYouTube channel list path: %s\n" "$YT_CHANNEL_LIST_FILE_FULL_PATH"
 
-YT_CHANNEL_FILE_STEM=$(echo "$YT_CHANNEL_LIST_FILE_FULL_PATH" | grep -oP '[^/]+$')
+YT_CHANNEL_FILE_STEM=$(basename "$YT_CHANNEL_LIST_FILE_FULL_PATH")
 YT_CHANNEL_DIRECTORY="${YT_CHANNEL_FILE_STEM%%-*}"
 
 echo "Checking if videos download directory exists..."
@@ -40,8 +40,9 @@ echo ""
 echo "Downloading from $YT_CHANNEL_FILE_STEM list..."
 echo ""
 
-YT_CHANNEL_DIRECTORY_FULL_PATH=$(realpath "$YT_CHANNEL_DIRECTORY/videos")
-yt-dlp -cw -o "%(title)s-%(id)s.%(ext)s" -P "$YT_CHANNEL_DIRECTORY_FULL_PATH" -a "$YT_CHANNEL_LIST_FILE_FULL_PATH" --embed-thumbnail --write-description --embed-metadata --no-colors
+# TEST
+#YT_CHANNEL_DIRECTORY_FULL_PATH=$(realpath "$YT_CHANNEL_DIRECTORY/videos")
+#yt-dlp -cw -o "%(title)s-%(id)s.%(ext)s" -P "$YT_CHANNEL_DIRECTORY_FULL_PATH" -a "$YT_CHANNEL_LIST_FILE_FULL_PATH" --embed-thumbnail --write-description --embed-metadata --no-colors
 
 echo ""
 echo "Done!"
