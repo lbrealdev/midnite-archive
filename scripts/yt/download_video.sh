@@ -14,7 +14,7 @@ fi
 
 echo "########################################"
 echo "#            YouTube Script            #"
-echo "#         Channel List Download        #"
+echo "#            Download Video            #"
 echo "########################################"
 
 if [[ ! -f "$CHANNEL_LIST_FILE_PATH" ]]; then
@@ -26,14 +26,17 @@ YT_CHANNEL_LIST_FILE_FULL_PATH=$(realpath "$CHANNEL_LIST_FILE_PATH")
 
 printf "\nYouTube channel list path: %s\n" "$YT_CHANNEL_LIST_FILE_FULL_PATH"
 
-YT_CHANNEL_FILE_STEM=$(echo "$YT_CHANNEL_LIST_FILE_FULL_PATH" | grep -oP '[^/]+$')
+YT_CHANNEL_FILE_STEM=$(basename "$YT_CHANNEL_LIST_FILE_FULL_PATH")
 YT_CHANNEL_DIRECTORY="${YT_CHANNEL_FILE_STEM%%-*}"
 
 echo "Checking if videos download directory exists..."
 
-if [[ ! -d "$YT_CHANNEL_DIRECTORY/videos" ]]; then
-  echo "The $YT_CHANNEL_DIRECTORY directory has been created."
+if [[ ! -d "$YT_CHANNEL_DIRECTORY" ]]; then
   mkdir -p "$YT_CHANNEL_DIRECTORY/videos"
+  echo "The $YT_CHANNEL_DIRECTORY directory has been created."
+else
+  mkdir "$YT_CHANNEL_DIRECTORY/videos"
+  echo "$YT_CHANNEL_DIRECTORY directory already exists, creating videos directory..."
 fi
 
 echo ""
