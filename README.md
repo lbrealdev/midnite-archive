@@ -47,3 +47,9 @@ Delete session:
 ```shell
 tmux kill-session -t download
 ```
+
+## Download comments
+
+```shell
+
+```

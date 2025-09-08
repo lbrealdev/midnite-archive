@@ -6,6 +6,7 @@ test.txt
 *.description
 *.mp4
 *.mp3
+*.info.json
 
 # Directories
 **/lists/
