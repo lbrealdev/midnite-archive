@@ -40,10 +40,8 @@ echo ""
 echo "Downloading from $YT_CHANNEL_FILE_STEM list..."
 echo ""
 
-# Test
-# Download videos with comments
 YT_CHANNEL_DIRECTORY_FULL_PATH=$(realpath "$YT_CHANNEL_DIRECTORY/videos")
-yt-dlp -cw -o "%(title)s-%(id)s.%(ext)s" -P "$YT_CHANNEL_DIRECTORY_FULL_PATH" -a "$YT_CHANNEL_LIST_FILE_FULL_PATH" --embed-thumbnail --write-description --embed-metadata --write-comments --dump-single-json --no-colors
+yt-dlp -cw -o "%(title)s-%(id)s.%(ext)s" -P "$YT_CHANNEL_DIRECTORY_FULL_PATH" -a "$YT_CHANNEL_LIST_FILE_FULL_PATH" --embed-thumbnail --write-description --embed-metadata --no-colors
 
 echo ""
 echo "Done!"
