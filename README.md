@@ -2,7 +2,25 @@
 
 ## Setup
 
+Pre-requirements:
+
+- yt-dlp
+
+### yt-dlp - Default Installation Method 
+
 // to do
+
+### yt-dlp - Install Using **uv**
+
+If you are using `uv`, run the following command to install `yt-dlp`:
+```shell
+uv tool install yt-dlp
+```
+
+Once installed, check the yt-dlp version:
+```shell
+yt-dlp --version
+```
 
 ## Usage
 
