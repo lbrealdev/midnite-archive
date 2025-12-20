@@ -8,6 +8,8 @@ usage() {
   exit 1
 }
 
+available() { command -v "$1" >/dev/null; }
+
 # Check if there enough arguments
 if [ "$#" -lt 1 ]; then
   usage
@@ -18,8 +20,15 @@ echo "#             YouTube Script           #"
 echo "#         Channel List Generator       #"
 echo "########################################"
 
-if [[ "$CHANNEL" =~ ^@ ]]; then
-  CHANNEL="${CHANNEL//@}"
+if [[ "$CHANNEL" =~ /@([^/]+) ]]; then
+  CHANNEL="${BASH_REMATCH[1]}"
+else
+  CHANNEL="${CHANNEL#@}"
+fi
+
+if ! available yt-dlp; then
+  printf "\nError: command 'yt-dlp' not found.\n"
+  exit 1
 fi
 
 YT_URL="https://www.youtube.com"
@@ -35,7 +44,7 @@ printf "YouTube channel url: %s\n\n" "${YT_URL/%//@$YT_CHANNEL_NAME}"
 
 echo "Generating output files..."
 echo ""
-echo "YouTube Channel file (tile): $YT_CHANNEL_TITLE_OUTPUT_FILE"
+echo "YouTube Channel file (title): $YT_CHANNEL_TITLE_OUTPUT_FILE"
 echo "YouTube Channel file (url): $YT_CHANNEL_URL_OUTPUT_FILE"
 echo ""
 
