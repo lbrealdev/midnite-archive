@@ -1,25 +1,22 @@
 # midnite-archive
 
+## Description
+
+This repository contains some scripts to automate downloading videos from YouTube.
+
+For the scripts to work correctly, make sure you have `yt-dlp` installed.
+
 ## Setup
 
-Pre-requirements:
-
-- yt-dlp
-
-### yt-dlp - Default Installation Method 
+### Installation 
 
 // to do
 
-### yt-dlp - Install Using **uv**
+### Install using **uv**
 
-If you are using `uv`, run the following command to install `yt-dlp`:
+If you have `uv` installed, run the following command to install `yt-dlp` as a uv tool.
 ```shell
 uv tool install yt-dlp
-```
-
-Once installed, check the yt-dlp version:
-```shell
-yt-dlp --version
 ```
 
 ## Usage
