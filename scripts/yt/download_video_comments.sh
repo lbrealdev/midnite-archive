@@ -7,6 +7,8 @@ usage() {
   exit 1
 }
 
+available() { command -v "$1" >/dev/null; }
+
 # Check if there enough arguments
 if [ "$#" -lt 1 ]; then
   usage
@@ -16,6 +18,11 @@ echo "########################################"
 echo "#            YouTube Script            #"
 echo "#        Download Video Comments       #"
 echo "########################################"
+
+if ! available yt-dlp; then
+  printf "\nError: command 'yt-dlp' not found.\n"
+  exit 1
+fi
 
 if [[ ! -f "$CHANNEL_LIST_FILE_PATH" ]]; then
   echo "The file $CHANNEL_LIST_FILE_PATH was not found!"
