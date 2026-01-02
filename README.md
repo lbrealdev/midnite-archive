@@ -2,22 +2,9 @@
 
 ## Description
 
-This repository contains some scripts to automate downloading videos from YouTube.
+The `midnite-archive` repository contains a collection of useful tools for downloading the extensive content of the band Midnite/Akae Beka from our beloved teacher and guide Vaughn Benjamin.
 
-For the scripts to work correctly, make sure you have `yt-dlp` installed.
-
-## Setup
-
-### Installation 
-
-// to do
-
-### Install using **uv**
-
-If you have `uv` installed, run the following command to install `yt-dlp` as a uv tool.
-```shell
-uv tool install yt-dlp
-```
+Follow the [requirements](docs/requirements.md) guide to check if you have the necessary tools to run the `midnite-archive` scripts correctly.
 
 ## Usage
 
