@@ -90,15 +90,9 @@ elif [[ -f "$INPUT" ]]; then
   YT_CHANNEL_FILE_STEM=$(basename "$YT_CHANNEL_LIST_FILE_FULL_PATH")
   YT_CHANNEL_DIRECTORY="${YT_CHANNEL_FILE_STEM%%-*}"
 
-  echo "Checking if videos download directory exists..."
-
-  if [[ ! -d "$YT_CHANNEL_DIRECTORY" ]]; then
-    mkdir -p "$YT_CHANNEL_DIRECTORY/videos"
-    echo "The $YT_CHANNEL_DIRECTORY directory has been created."
-  else
-    mkdir -p "$YT_CHANNEL_DIRECTORY/videos"
-    echo "$YT_CHANNEL_DIRECTORY directory already exists, creating videos directory..."
-  fi
+  echo "Preparing download directory..."
+  mkdir -p "$YT_CHANNEL_DIRECTORY/videos"
+  echo "Ready: $YT_CHANNEL_DIRECTORY/videos"
 
   DOWNLOAD_DIR="$YT_CHANNEL_DIRECTORY/videos"
   echo ""
