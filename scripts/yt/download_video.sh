@@ -52,9 +52,19 @@ echo "########################################"
 # Check all required dependencies
 validate_dependencies yt-dlp deno
 
-# Determine input type and validate
-YT_DLP_ARGS=()
+# Base yt-dlp arguments common to both modes
+BASE_YT_DLP_ARGS=(
+  -cw
+  -o "%(title)s-%(id)s.%(ext)s"
+  --embed-thumbnail
+  --write-description
+  --embed-metadata
+  --no-colors
+  --remote-components ejs:npm
+  --js-runtimes deno:"$(which deno)"
+)
 
+# Determine input type and validate
 if [[ "$INPUT" =~ ^https?:// ]]; then
   # Input is a URL
   echo "Input type: Single YouTube URL"
@@ -65,15 +75,8 @@ if [[ "$INPUT" =~ ^https?:// ]]; then
 
   # yt-dlp arguments for single URL
   YT_DLP_ARGS=(
-    -cw
-    -o "%(title)s-%(id)s.%(ext)s"
+    "${BASE_YT_DLP_ARGS[@]}"
     -P "$DOWNLOAD_DIR"
-    --embed-thumbnail
-    --write-description
-    --embed-metadata
-    --no-colors
-    --remote-components ejs:npm
-    --js-runtimes deno:"$(which deno)"
     "$INPUT"
   )
 
@@ -104,16 +107,9 @@ elif [[ -f "$INPUT" ]]; then
 
   # yt-dlp arguments for file input
   YT_DLP_ARGS=(
-    -cw
-    -o "%(title)s-%(id)s.%(ext)s"
+    "${BASE_YT_DLP_ARGS[@]}"
     -P "$DOWNLOAD_DIR"
     -a "$YT_CHANNEL_LIST_FILE_FULL_PATH"
-    --embed-thumbnail
-    --write-description
-    --embed-metadata
-    --no-colors
-    --remote-components ejs:npm
-    --js-runtimes deno:"$(which deno)"
   )
 
 else
