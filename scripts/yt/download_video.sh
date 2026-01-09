@@ -2,7 +2,8 @@
 
 set -euo pipefail
 
-INPUT="$1"
+# Get input argument, defaulting to empty if not provided
+INPUT="${1:-}"
 
 # Display usage information
 usage() {
