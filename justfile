@@ -1,4 +1,4 @@
-@setup:
+@pc:
     pre-commit install
 
 [working-directory: 'scripts']
