@@ -1,3 +1,4 @@
 [tools]
-deno = "latest"
 shellcheck = "latest"
+deno = "latest"
+yt-dlp = "latest"
