@@ -38,13 +38,11 @@ if ! available yt-dlp; then
   exit 1
 fi
 
-# Check if deno is available (optional for yt-dlp JavaScript handling)
-DENO_AVAILABLE=false
-if available deno; then
-  DENO_AVAILABLE=true
-  echo "Deno detected - using as JavaScript runtime for yt-dlp"
-else
-  echo "Deno not found - yt-dlp will use fallback JavaScript runtime"
+# Check if deno is available
+if ! available deno; then
+  echo "Error: deno is not installed. Please install it first."
+  echo "Run: curl -fsSL https://deno.land/install.sh | sh"
+  exit 1
 fi
 
 # Determine input type and validate
@@ -68,14 +66,9 @@ if [[ "$INPUT" =~ ^https?:// ]]; then
     --embed-metadata
     --no-colors
     --remote-components ejs:npm
+    --js-runtimes deno:"$(which deno)"
+    "$INPUT"
   )
-
-  # Add deno runtime if available
-  if [[ "$DENO_AVAILABLE" == true ]]; then
-    YT_DLP_ARGS+=(--js-runtimes "deno:$(which deno)")
-  fi
-
-  YT_DLP_ARGS+=("$INPUT")
 
 elif [[ -f "$INPUT" ]]; then
   # Input is a file
@@ -113,12 +106,8 @@ elif [[ -f "$INPUT" ]]; then
     --embed-metadata
     --no-colors
     --remote-components ejs:npm
+    --js-runtimes deno:"$(which deno)"
   )
-
-  # Add deno runtime if available
-  if [[ "$DENO_AVAILABLE" == true ]]; then
-    YT_DLP_ARGS+=(--js-runtimes "deno:$(which deno)")
-  fi
 
 else
   echo "Error: Input '$INPUT' is neither a valid URL nor an existing file."
