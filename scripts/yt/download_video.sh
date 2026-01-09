@@ -21,6 +21,24 @@ usage() {
 # Check if required commands are available
 available() { command -v "$1" >/dev/null; }
 
+# Validate all required dependencies
+validate_dependencies() {
+  local missing_tools=()
+
+  for tool in "$@"; do
+    if ! available "$tool"; then
+      missing_tools+=("$tool")
+    fi
+  done
+
+  if [[ ${#missing_tools[@]} -gt 0 ]]; then
+    echo "Error: Missing required tools: ${missing_tools[*]}"
+    echo "Please install them first."
+    echo "Run: mise install ${missing_tools[*]}"
+    exit 1
+  fi
+}
+
 # Validate arguments
 if [ "$#" -lt 1 ]; then
   usage
@@ -31,19 +49,8 @@ echo "#            YouTube Script            #"
 echo "#            Download Video            #"
 echo "########################################"
 
-# Check if yt-dlp is available
-if ! available yt-dlp; then
-  echo "Error: yt-dlp is not installed. Please install it first."
-  echo "Run: uv tool install yt-dlp"
-  exit 1
-fi
-
-# Check if deno is available
-if ! available deno; then
-  echo "Error: deno is not installed. Please install it first."
-  echo "Run: curl -fsSL https://deno.land/install.sh | sh"
-  exit 1
-fi
+# Check all required dependencies
+validate_dependencies yt-dlp deno
 
 # Determine input type and validate
 YT_DLP_ARGS=()
