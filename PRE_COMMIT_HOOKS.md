@@ -48,7 +48,7 @@ git commit --no-verify
 
 ### CI Integration
 
-Pre-commit is configured for CI with automatic updates and autofixing enabled. The configuration includes:
+Pre-commit is configured for CI with automatic updates and auto fixing enabled. The configuration includes:
 
 - Weekly automatic updates of hook versions
 - Automatic fixing of fixable issues

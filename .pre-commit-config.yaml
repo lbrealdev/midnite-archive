@@ -13,7 +13,7 @@ ci:
 repos:
   # General hooks
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.5.0
+    rev: v6.0.0
     hooks:
       - id: trailing-whitespace
         files: \.(sh|md)$
@@ -33,7 +33,7 @@ repos:
 
   # Shell scripting hooks
   - repo: https://github.com/shellcheck-py/shellcheck-py
-    rev: v0.9.0.6
+    rev: v0.11.0.1
     hooks:
       - id: shellcheck
         files: \.sh$
@@ -42,7 +42,7 @@ repos:
 
   # Commit message hooks
   - repo: https://github.com/commitizen-tools/commitizen
-    rev: v3.13.0
+    rev: v4.11.1
     hooks:
       - id: commitizen
         stages: [commit-msg]
