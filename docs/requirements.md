@@ -27,5 +27,3 @@ If you have `uv` installed, run the following command to install `yt-dlp` as a u
 ```shell
 uv tool install yt-dlp
 ```
-
-
