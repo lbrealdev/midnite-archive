@@ -126,6 +126,13 @@ Operational guidelines for documentation and project maintenance.
 - Ensure documentation renders correctly
 - Test documented commands on clean environment
 
+## Special Commands
+
+Special commands provide shortcuts for common operations and agent management:
+
+- `@refresh` - Synchronizes agent with latest repository state and AGENTS.md guidelines
+- `@help commit` - Provides commit guidance and examples for current changes
+
 ## Build/Lint/Test Commands
 
 ### Build Commands
