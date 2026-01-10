@@ -104,6 +104,8 @@ Operational guidelines for documentation and project maintenance.
 - Include table of contents for longer documents
 
 **Git Operations**
+- Never commit to main
+- If requested and the branch is `main`, abort and notify
 - Never commit in build mode
 - Only commit in build mode if explicitly ordered
 - Commit in English in a clear and concise tone for users and developers
@@ -450,8 +452,9 @@ Before committing changes:
 
 ### Development Workflow
 
-1. Create feature branch: `git checkout -b feature/new-script`
-2. Write script following these guidelines
-3. Test thoroughly with various inputs
-4. Run linting: `shellcheck your-script.sh`
-5. Commit with descriptive message
+1. Follow the `Git Operations` section to the letter
+2. Create feature branch: `git checkout -b feature/new-script`
+3. Write script following these guidelines
+4. Test thoroughly with various inputs
+5. Run linting: `shellcheck your-script.sh`
+6. Commit with descriptive message
