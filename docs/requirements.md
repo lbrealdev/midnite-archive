@@ -1,6 +1,6 @@
 # Requirements
 
-To run the **midnite-archive** scripts, you need to install the following tools. The scripts use yt-dlp with External JavaScript (EJS) support for downloading YouTube content.
+To run the **midnite-archive** scripts, you need to install the following tools.
 
 ## Prerequisites
 
@@ -62,22 +62,12 @@ sudo apt update && sudo apt install ffmpeg -y
 ffmpeg -version
 ```
 
-### yt-dlp: External JS Scripts Setup Guide
-
-To download from YouTube, yt-dlp needs to solve JavaScript challenges presented by YouTube using an external JavaScript runtime.
-
-See more details: https://github.com/yt-dlp/yt-dlp/wiki/EJS
-
-```shell
-sudo apt install ffmpeg -y
-
-ffmpeg -version
-```
+---
 
 > [!IMPORTANT]
-> yt-dlp EJS Configuration
 > The scripts use yt-dlp's External JavaScript (EJS) system to handle YouTube's JavaScript challenges. This requires Deno as the JavaScript runtime.
 > Why EJS?
+>
 > YouTube frequently changes their website structure and implements JavaScript challenges to prevent automated access. yt-dlp's EJS system uses Deno to run JavaScript code that can handle these challenges, ensuring reliable downloads.
 
 ### Configuration Details
