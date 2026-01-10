@@ -113,6 +113,8 @@ Operational guidelines for documentation and project maintenance.
 - Only commit multiple lines if explicitly ordered
 - Add a special command like `@help commit`
 - If the user uses the special command, provide a commit example for the last change
+- @refresh works in build or plan mode
+- @refresh purpose is that the agent read the last changes in AGENTS.md and enforce it
 
 ### Quality Assurance
 
