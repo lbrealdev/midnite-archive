@@ -2,8 +2,6 @@
 
 To run the **midnite-archive** scripts, you need to install the following tools. The scripts use yt-dlp with External JavaScript (EJS) support for downloading YouTube content.
 
-- https://github.com/yt-dlp/yt-dlp?tab=readme-ov-file#dependencies
-
 ## Prerequisites
 
 - **yt-dlp** - YouTube downloader with EJS support
@@ -23,7 +21,7 @@ Install `mise` if you don't have it:
 curl https://mise.run | sh
 ```
 
-Once mise is installed, install tools from `mise.toml`:
+Once `mise` is installed, install tools from `mise.toml`:
 ```shell
 mise install
 ```
@@ -58,7 +56,7 @@ export PATH="$HOME/.deno/bin:$PATH"
 #### ffmpeg
 
 ```shell
-sudo apt update && sudo apt install -y ffmpeg
+sudo apt update && sudo apt install ffmpeg -y
 
 # Verify installation
 ffmpeg -version
@@ -76,24 +74,20 @@ sudo apt install ffmpeg -y
 ffmpeg -version
 ```
 
-## Setup
+> [!IMPORTANT]
+> yt-dlp EJS Configuration
+> The scripts use yt-dlp's External JavaScript (EJS) system to handle YouTube's JavaScript challenges. This requires Deno as the JavaScript runtime.
+> Why EJS?
+> YouTube frequently changes their website structure and implements JavaScript challenges to prevent automated access. yt-dlp's EJS system uses Deno to run JavaScript code that can handle these challenges, ensuring reliable downloads.
 
-### Installation
+### Configuration Details
 
-// to do
+The scripts automatically configure yt-dlp with:
+- `--remote-components ejs:npm` - Enables EJS with npm package support
+- `--js-runtimes deno:$(which deno)` - Specifies Deno as the JavaScript runtime
 
-### Install using **uv**
+## Dependencies Reference
 
-If you have `uv` installed, run the following command to install `yt-dlp` as a uv tool.
-```shell
-uv tool install yt-dlp
-```
-
-
-```shell
-mise install
-```
-
-
-- https://github.com/yt-dlp/ejs
--
+- [yt-dlp Dependencies](https://github.com/yt-dlp/yt-dlp?tab=readme-ov-file#dependencies)
+- [yt-dlp EJS Documentation](https://github.com/yt-dlp/yt-dlp/wiki/EJS)
+- [yt-dlp EJS Repository](https://github.com/yt-dlp/ejs)
