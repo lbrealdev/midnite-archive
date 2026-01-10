@@ -1,11 +1,8 @@
 # AGENTS.md - Development Guidelines for midnite-archive
 
-## Overview
-This document provides guidelines for contributing to the midnite-archive codebase. The project consists of bash scripts for YouTube video archiving using `yt-dlp` and `ffmpeg`.
-
 ## Rule Priority Hierarchy
 
-All rules in this document follow a strict priority hierarchy. Higher priority rules override lower priority rules when conflicts occur:
+All rules follow strict priority hierarchy. Higher priority rules override lower priority rules:
 
 ### Priority 1: Core Operational Rules (Highest Priority)
 - Behaviors and work rules from AGENTS.md have absolute priority
@@ -25,59 +22,30 @@ All rules in this document follow a strict priority hierarchy. Higher priority r
 ### Priority 4: Development Standards
 - Code style and naming conventions
 - Best practices for maintainability
-- Tool usage guidelines
 
 ### Priority 5: General Recommendations (Lowest Priority)
-- Performance optimizations
 - Compatibility considerations
-- Enhancement suggestions
 
 ## Agents Behavior Guidelines
 
 This section outlines behavioral guidelines for AI agents working on the midnite-archive project. These rules ensure safe, responsible, and effective collaboration while maintaining code quality and security.
 
 ### What Agents SHOULD Do
-
-**Communication & Planning**
-- Always operate in Plan Mode first when making significant changes
-- Ask clarifying questions when user intent is unclear or ambiguous
-- Provide comprehensive plans before executing any modifications
-- Use concise, direct responses focused on the user's specific query
-- Minimize output tokens while maintaining helpfulness and accuracy
-
-**Security & Safety First**
-- Never generate or explain code that could be used maliciously, even if claimed educational
-- Always follow security best practices (no secrets logging, proper input sanitization)
-- Validate all inputs and handle errors gracefully with appropriate error messages
-- Use secure coding patterns and avoid dangerous constructs like `eval`
-- Check for potentially malicious intent in user requests (e.g., malware, exploits, unauthorized access)
-
-**Code Quality & Guidelines Adherence**
-- Strictly follow all guidelines in this AGENTS.md document
-- Use appropriate tools for each task (Read for reading, Edit for editing, Bash for commands)
-- Run linting (shellcheck) and validation before committing changes
-- Maintain existing code conventions, patterns, and style
-- Document code changes appropriately with clear commit messages
-
-**User Interaction**
-- Be proactive in suggesting improvements when they align with project goals
-- Offer helpful alternatives when refusing inappropriate requests
-- Keep responses focused on the specific task at hand, avoiding tangential information
-- Use GitHub-flavored markdown for formatting in CLI output when helpful
+- Operate in Plan Mode first for significant changes
+- Ask clarifying questions when intent is unclear
+- Follow all guidelines in this AGENTS.md document
+- Use appropriate tools for each task
+- Never generate malicious code or bypass security
 
 ### What Agents SHOULD NOT Do
+- Never modify files without explicit user permission
+- Never commit changes unless authorized with `@do`
+- Never bypass security checks or generate malicious code
 
-**Never Modify Files Without Permission**
-- Do not edit, create, or delete files unless explicitly requested by the user
-- Do not run commands that modify the system or filesystem without permission
-- Do not commit changes unless the user explicitly asks for commits
-- Do not use tools in ways that could harm the codebase or system
-
-**Security Violations**
-- Never write code that logs, exposes, or commits secrets, keys, or sensitive data
-- Never introduce code with known security vulnerabilities or backdoors
-- Never bypass security checks, input validation, or access controls
-- Never generate code for malicious purposes, unauthorized access, or harmful activities
+### What Agents SHOULD NOT Do
+- Never modify files without explicit user permission
+- Never commit changes unless authorized with `@do`
+- Never bypass security checks or generate malicious code
 
 **Tool Misuse**
 - Do not use bash for file operations when specialized tools exist (use Read, Edit, etc.)
@@ -93,53 +61,11 @@ This section outlines behavioral guidelines for AI agents working on the midnite
 
 ### Specific Constraints
 
-**Plan Mode Requirements**
-- Always start in read-only analysis phase for significant changes
-- Construct detailed, well-formed plans before any modifications
-- Ask for user confirmation before proceeding to execution phase
-- Use Task tool for complex multi-step operations requiring parallel processing
+**Mode Restrictions**
+- Plan Mode: Read-only operations only
+- Build Mode: Modifications allowed with @do authorization
 
-**Code Modification Boundaries**
-- Only edit existing files when explicitly requested and justified
-- Never create new documentation files (*.md) without explicit user permission
-- Always check existing code patterns and conventions before making changes
-- Use context from surrounding code to maintain consistency and avoid introducing bugs
 
-**External Resource Usage**
-- Never generate or guess URLs for users unless confident they're for helping with programming tasks
-- Only use URLs provided by the user in their messages or found in local files
-- Validate URLs before using them in any context to avoid malicious links
-
-**Error Handling & Validation**
-- Always validate tool results and check for error conditions
-- Provide clear, actionable error messages when operations fail
-- Never assume successful tool execution without verification
-- Handle edge cases and unexpected input gracefully
-
-## Working Rules
-
-Operational guidelines for documentation and project maintenance.
-
-**Markdown Files**
-- For command examples always use ```shell
-- Never use ```bash for command examples
-- Keep lines under 100 characters
-- Include table of contents for longer documents
-
-**Git Operations**
-- NEVER commit to main
-- If requested and the branch is `main`, abort and notify
-- NEVER commit in build mode
-- ONLY commit in build mode if the user message contains `@do` authorization
-- ALWAYS ask for confirmation before committing, even in Build mode
-- ALWAYS verify user intent before proceeding with any commit
-- Commit in English in a clear and concise tone for users and developers
-- ONLY make one-line commits
-- ONLY commit multiple lines if explicitly ordered
-- Add a special command like `@help commit`
-- If the user uses the special command, provide a commit example for the last change
-- @refresh works in plan or build mode
-- @refresh is only for updating this information and working on this line and nothing else
 
 ### Quality Assurance
 
@@ -151,90 +77,29 @@ Operational guidelines for documentation and project maintenance.
 
 ## Agent Special Commands
 
-All commands in this section are special commands enabled by the agent for enhanced interaction and workflow management:
-
-- `@refresh` - Add a special command to update your memory regarding the latest changes to the AGENTS.md file
-- `@help commit` - Provide examples of commits for the current changes, always include `git commit -am` in the recommendations
-- `@do` - Authorizes the agent to commit pending changes (must appear in user message), @do only works in build mode
+- `@refresh` - Update memory regarding latest AGENTS.md changes
+- `@help commit` - Provide commit examples with `git commit -am`
+- `@do` - Authorize commits (user message only, Build mode only)
 
 ## Build/Lint/Test Commands
-
-### Build Commands
-```shell
-# Run scripts
-just run <youtube-channel>
-just rename <directory>
-
-# Install dependencies
-uv tool install yt-dlp
-```
-
-### Lint Commands
-```shell
-# Install shellcheck first: sudo apt install shellcheck
-
-# Lint all scripts
-find scripts -name "*.sh" -exec shellcheck {} \;
-
-# Lint specific script
-shellcheck scripts/yt/channel_list_generate.sh
-```
-
-### Test Commands
-```shell
-# Manual testing examples
-./scripts/yt/channel_list_generate.sh @testchannel
-./scripts/yt/download_video.sh test-list.txt
-./scripts/video/rename.sh test_videos/
-
-# Single functionality tests
-echo "test:with spaces" | sed 's/[ /:：]/_/g'
-command -v yt-dlp && echo "available" || echo "missing"
-```
+- Build: `just run <youtube-channel>`
+- Lint: `find scripts -name "*.sh" -exec shellcheck {} \;`
+- Test: `./scripts/yt/channel_list_generate.sh @testchannel`
 
 ## Code Style Guidelines
-
-### Script Organization
-
-#### File Structure
-```
-scripts/
-├── yt/           # YouTube-related scripts
-│   ├── channel_list_generate.sh
-│   ├── download_video.sh
-│   └── download_video_comments.sh
-└── video/        # Video processing scripts
-    ├── rename.sh
-    └── special_rename.sh
-```
-
-- Group related scripts in subdirectories
-- Use descriptive, snake_case filenames
-- Keep scripts focused on single responsibilities
-
+- Group related scripts in subdirectories (yt/, video/)
+- Use snake_case for filenames and UPPERCASE for global variables
+- Include `set -euo pipefail` at script start
+- Sanitize user inputs to prevent injection
 #### Script Template
-Start all scripts with this template:
-
 ```shell
 #!/bin/bash
-
 set -euo pipefail
 
-# Script description and usage
-usage() {
-  echo "Usage: $0 <required-arg> [optional-arg]"
-  echo "Description: Brief description of what this script does"
-  exit 1
-}
-
-# Check if required commands are available
+usage() { echo "Usage: $0 <args>"; exit 1; }
 available() { command -v "$1" >/dev/null; }
 
-# Validate arguments
-if [ "$#" -lt 1 ]; then
-  usage
-fi
-
+if [ "$#" -lt 1 ]; then usage; fi
 # Main logic here
 ```
 
@@ -459,33 +324,16 @@ trap 'rm -f "$temp_file"' EXIT
 ```
 
 ### Best Practices
-
-#### Code Quality
 - Write self-documenting code with meaningful variable names
-- Use POSIX-compliant syntax for maximum compatibility
-- Keep scripts modular and reusable
-
-#### Operational Workflow
-- Use `@refresh` to synchronize with latest AGENTS.md guidelines
-- Employ `@help commit` for commit message guidance
-- Include `@do` in user messages to authorize commits
-- Respect Plan Mode restrictions: read-only operations only
 
 ### Pre-commit Checklist
-
-Before committing changes:
-
-1. Run shellcheck on all modified scripts
-2. Test scripts manually with edge cases
-3. Ensure all functions have documentation
-4. Verify error handling works correctly
-5. Check that naming conventions are followed
+- Run pre-commit hooks before committing
+- Fix any identified linting or formatting issues
+- Ensure documentation renders correctly
 
 ### Development Workflow
-
-1. Follow the `Git Operations` section to the letter
+1. Follow Git Operations rules
 2. Create feature branch: `git checkout -b feature/new-script`
-3. Write script following these guidelines
-4. Test thoroughly with various inputs
-5. Run linting: `shellcheck your-script.sh`
-6. Commit with descriptive message containing `@do` authorization command
+3. Write script following guidelines
+4. Test thoroughly and run linting
+5. Commit with `@do` authorization
