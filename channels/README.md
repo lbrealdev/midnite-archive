@@ -36,10 +36,3 @@ For advanced users or custom list generation, you can use yt-dlp directly. The c
 ```shell
 uvx -p 3.12 yt-dlp@latest --flat-playlist --print "%(title)s-%(id)s" https://www.youtube.com/@ChannelName > ChannelName-$(date +%Y%m%d).txt
 ```
-
-**Parameters explained:**
-- `uvx`: Runs Python packages in isolated environments
-- `-p 3.12`: Specifies Python 3.12
-- `--flat-playlist`: Lists videos without downloading
-- `--print "%(title)s-%(id)s"`: Outputs video title and ID
-- `> filename.txt`: Saves output to a timestamped file
