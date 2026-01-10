@@ -1,0 +1,17 @@
+name: Download Youtube Videos List
+run-name: yt-dlp - download list
+on:
+  schedule:
+    - cron: '0 0 * * *'
+
+jobs:
+  download:
+    name: Download Youtube Videos List
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
