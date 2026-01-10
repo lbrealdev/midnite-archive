@@ -66,9 +66,12 @@ ffmpeg -version
 
 > [!IMPORTANT]
 > The scripts use yt-dlp's External JavaScript (EJS) system to handle YouTube's JavaScript challenges. This requires Deno as the JavaScript runtime.
+>
 > Why EJS?
 >
 > YouTube frequently changes their website structure and implements JavaScript challenges to prevent automated access. yt-dlp's EJS system uses Deno to run JavaScript code that can handle these challenges, ensuring reliable downloads.
+
+---
 
 ### Configuration Details
 
