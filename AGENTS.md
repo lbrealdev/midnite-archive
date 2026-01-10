@@ -108,6 +108,7 @@ Operational guidelines for documentation and project maintenance.
 - If requested and the branch is `main`, abort and notify
 - NEVER commit in build mode
 - ONLY commit in build mode if explicitly ordered by the user
+- ONLY commit when the message contains `@do` authorization command
 - ALWAYS ask for confirmation before committing, even in Build mode
 - ALWAYS verify user intent before proceeding with any commit
 - Commit in English in a clear and concise tone for users and developers
@@ -126,12 +127,13 @@ Operational guidelines for documentation and project maintenance.
 - Ensure documentation renders correctly
 - Test documented commands on clean environment
 
-## Special Commands
+## Agent Special Commands
 
-Special commands provide shortcuts for common operations and agent management:
+All commands in this section are special commands enabled by the agent for enhanced interaction and workflow management:
 
 - `@refresh` - Synchronizes agent with latest repository state and AGENTS.md guidelines
 - `@help commit` - Provides commit guidance and examples for current changes
+- `@do` - Authorizes the agent to commit pending changes (must be included in commit request)
 
 ## Build/Lint/Test Commands
 
