@@ -107,8 +107,7 @@ Operational guidelines for documentation and project maintenance.
 - NEVER commit to main
 - If requested and the branch is `main`, abort and notify
 - NEVER commit in build mode
-- ONLY commit in build mode if explicitly ordered by the user
-- ONLY commit when the message contains `@do` authorization command
+- ONLY commit in build mode if the user message contains `@do` authorization
 - ALWAYS ask for confirmation before committing, even in Build mode
 - ALWAYS verify user intent before proceeding with any commit
 - Commit in English in a clear and concise tone for users and developers
@@ -133,7 +132,7 @@ All commands in this section are special commands enabled by the agent for enhan
 
 - `@refresh` - Synchronizes agent with latest repository state and AGENTS.md guidelines
 - `@help commit` - Provides commit guidance and examples for current changes with `git commit -am`
-- `@do` - Authorizes the agent to commit pending changes (must be included in commit request)
+- `@do` - Authorizes the agent to commit pending changes (must appear in user message)
 
 ## Build/Lint/Test Commands
 
