@@ -87,11 +87,14 @@ This section outlines behavioral guidelines for AI agents working on the midnite
 - Test: `./scripts/yt/channel_list_generate.sh @testchannel`
 
 ## Code Style Guidelines
+
 - Group related scripts in subdirectories (yt/, video/)
 - Use snake_case for filenames and UPPERCASE for global variables
 - Include `set -euo pipefail` at script start
 - Sanitize user inputs to prevent injection
+
 #### Script Template
+
 ```shell
 #!/bin/bash
 set -euo pipefail
