@@ -87,6 +87,48 @@ This section outlines behavioral guidelines for AI agents working on the midnite
 - Never assume successful tool execution without verification
 - Handle edge cases and unexpected input gracefully
 
+## Working Rules
+
+Operational guidelines for documentation and project maintenance.
+
+### Documentation Standards
+
+**Markdown Files**
+- Use GitHub-flavored Markdown with .md extension
+- Maintain consistent heading hierarchy (H1 → H2 → H3)
+- Use descriptive filenames in kebab-case
+- Keep lines under 100 characters
+- Include table of contents for longer documents
+
+**Content Quality**
+- Write clear, concise English for all audiences
+- Include practical examples for commands and code
+- Test all documented procedures before adding
+- Use consistent terminology across docs
+- Update related docs when making changes
+
+### File Organization
+
+**Project Structure**
+- Group related files logically (scripts/, docs/, channels/)
+- Use descriptive directory names (yt/, video/, etc.)
+- Keep root directory clean
+- Follow existing naming patterns
+
+**Version Control**
+- Use conventional commit format (feat:, docs:, refactor:)
+- Write clear commit messages describing changes
+- Include issue/PR references when applicable
+- Avoid committing temporary or generated files
+
+### Quality Assurance
+
+**Pre-commit Checks**
+- Always run pre-commit hooks before committing
+- Fix any identified linting or formatting issues
+- Ensure documentation renders correctly
+- Test documented commands on clean environment
+
 ## Build/Lint/Test Commands
 
 ### Build Commands
@@ -421,5 +463,4 @@ Before committing changes:
 2. Write script following these guidelines
 3. Test thoroughly with various inputs
 4. Run linting: `shellcheck your-script.sh`
-5. Commit with descriptive message</content>
-<parameter name="filePath">AGENTS.md
+5. Commit with descriptive message
