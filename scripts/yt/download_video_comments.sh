@@ -51,7 +51,7 @@ echo "Downloading from $YT_CHANNEL_FILE_STEM list..."
 echo ""
 
 YT_CHANNEL_DIRECTORY_FULL_PATH=$(realpath "$YT_CHANNEL_DIRECTORY/comments")
-yt-dlp -o "%(id)s.comments.json" -P "$YT_CHANNEL_DIRECTORY_FULL_PATH" -a "$YT_CHANNEL_LIST_FILE_FULL_PATH" --write-comments --skip-download
+yt-dlp -o "%(id)s.comments.json" -P "$YT_CHANNEL_DIRECTORY_FULL_PATH" -a "$YT_CHANNEL_LIST_FILE_FULL_PATH" --write-comments --skip-download --no-colors
 
 echo ""
 echo "Done!"

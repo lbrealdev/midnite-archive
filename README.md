@@ -2,22 +2,16 @@
 
 ## Description
 
-This repository contains some scripts to automate downloading videos from YouTube.
+A collection of bash scripts for archiving the extensive YouTube content of the reggae band **Midnite/Akae Beka** from our beloved teacher and guide Vaughn Benjamin. Uses yt-dlp with External JavaScript (EJS) support for reliable downloads despite YouTube's frequent changes.
 
-For the scripts to work correctly, make sure you have `yt-dlp` installed.
+**Key Features:**
+- Generate comprehensive video lists from Midnite/Akae Beka's YouTube channels
+- Download videos with metadata, thumbnails, and comments
+- Batch rename downloaded files for better organization
+- EJS-powered reliability for handling YouTube's JavaScript challenges
 
-## Setup
-
-### Installation 
-
-// to do
-
-### Install using **uv**
-
-If you have `uv` installed, run the following command to install `yt-dlp` as a uv tool.
-```shell
-uv tool install yt-dlp
-```
+**Requirements:** See [requirements](docs/requirements.md) for setup instructions.
+**Troubleshooting:** Check [troubleshooting](docs/troubleshooting.md) for common issues.
 
 ## Usage
 
