@@ -62,25 +62,20 @@ sudo apt update && sudo apt install ffmpeg -y
 ffmpeg -version
 ```
 
----
+## EJS Configuration
 
 > [!IMPORTANT]
-> The scripts use yt-dlp's External JavaScript (EJS) system to handle YouTube's JavaScript challenges. This requires Deno as the JavaScript runtime.
->
-> Why EJS?
->
-> YouTube frequently changes their website structure and implements JavaScript challenges to prevent automated access. yt-dlp's EJS system uses Deno to run JavaScript code that can handle these challenges, ensuring reliable downloads.
-
----
+> Scripts use yt-dlp's External JavaScript (EJS) system with Deno to handle YouTube's JavaScript challenges.
 
 ### Configuration Details
 
-The scripts automatically configure yt-dlp with:
+The scripts automatically configure `yt-dlp` with:
+
 - `--remote-components ejs:npm` - Enables EJS with npm package support
 - `--js-runtimes deno:$(which deno)` - Specifies Deno as the JavaScript runtime
 
-## Dependencies Reference
+## References
 
 - [yt-dlp Dependencies](https://github.com/yt-dlp/yt-dlp?tab=readme-ov-file#dependencies)
 - [yt-dlp EJS Documentation](https://github.com/yt-dlp/yt-dlp/wiki/EJS)
-- [yt-dlp EJS Repository](https://github.com/yt-dlp/ejs)
+- [EJS Repository](https://github.com/yt-dlp/ejs)
