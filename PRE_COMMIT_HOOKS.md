@@ -6,7 +6,7 @@ This project uses [pre-commit](https://pre-commit.com/) to maintain code quality
 
 Pre-commit is already configured in `.pre-commit-config.yaml`. To set it up:
 
-```bash
+```shell
 # Install pre-commit (if not already installed)
 pip install pre-commit
 
@@ -29,7 +29,7 @@ pre-commit install --hook-type pre-push
 
 ### Usage
 
-```bash
+```shell
 # Run all hooks on all files
 pre-commit run --all-files
 

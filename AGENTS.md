@@ -91,35 +91,26 @@ This section outlines behavioral guidelines for AI agents working on the midnite
 
 Operational guidelines for documentation and project maintenance.
 
-### Documentation Standards
+**Agent Sync**
+- Scan the AGENTS.md file for 5 minutes
+- Synchronize the assistant without the user explicitly requesting it
+- Add a special command like `@refresh`
+- If the user uses the special command, provide brief reasoning and respond with `Synchronized`
 
 **Markdown Files**
-- Use GitHub-flavored Markdown with .md extension
-- Maintain consistent heading hierarchy (H1 → H2 → H3)
-- Use descriptive filenames in kebab-case
+- For command examples always use ```shell
+- Never use ```bash for command examples
 - Keep lines under 100 characters
 - Include table of contents for longer documents
 
-**Content Quality**
-- Write clear, concise English for all audiences
-- Include practical examples for commands and code
-- Test all documented procedures before adding
-- Use consistent terminology across docs
-- Update related docs when making changes
-
-### File Organization
-
-**Project Structure**
-- Group related files logically (scripts/, docs/, channels/)
-- Use descriptive directory names (yt/, video/, etc.)
-- Keep root directory clean
-- Follow existing naming patterns
-
-**Version Control**
-- Use conventional commit format (feat:, docs:, refactor:)
-- Write clear commit messages describing changes
-- Include issue/PR references when applicable
-- Avoid committing temporary or generated files
+**Git Operations**
+- Never commit in build mode
+- Only commit in build mode if explicitly ordered
+- Commit in English in a clear and concise tone for users and developers
+- Only make one-line commits
+- Only commit multiple lines if explicitly ordered
+- Add a special command like `@help commit`
+- If the user uses the special command, provide a commit example for the last change
 
 ### Quality Assurance
 
@@ -132,7 +123,7 @@ Operational guidelines for documentation and project maintenance.
 ## Build/Lint/Test Commands
 
 ### Build Commands
-```bash
+```shell
 # Run scripts
 just run <youtube-channel>
 just rename <directory>
@@ -142,7 +133,7 @@ uv tool install yt-dlp
 ```
 
 ### Lint Commands
-```bash
+```shell
 # Install shellcheck first: sudo apt install shellcheck
 
 # Lint all scripts
@@ -153,7 +144,7 @@ shellcheck scripts/yt/channel_list_generate.sh
 ```
 
 ### Test Commands
-```bash
+```shell
 # Manual testing examples
 ./scripts/yt/channel_list_generate.sh @testchannel
 ./scripts/yt/download_video.sh test-list.txt
@@ -187,7 +178,7 @@ scripts/
 #### Script Template
 Start all scripts with this template:
 
-```bash
+```shell
 #!/bin/bash
 
 set -euo pipefail
@@ -217,7 +208,7 @@ fi
 - Use `lowercase_with_underscores` for local variables
 - Be descriptive and indicate purpose
 
-```bash
+```shell
 # Good
 YT_CHANNEL_NAME="$1"
 TIMESTAMP=$(date '+%Y%m%d%H%M%S')
@@ -234,7 +225,7 @@ file="output.txt"   # Unclear context
 - Start with action verbs (get, process, validate)
 - Keep functions small and focused
 
-```bash
+```shell
 # Good
 validate_channel_name() { ... }
 process_video_list() { ... }
@@ -249,7 +240,7 @@ do_stuff() { ... }  # Not descriptive
 - Use `snake_case` for all filenames and directory names
 - Include descriptive suffixes where helpful
 
-```bash
+```shell
 # Good
 channel_list_generate.sh
 video_rename.sh
@@ -268,7 +259,7 @@ downloadComments.sh     # inconsistent
 - Add blank lines between logical sections
 - Space around operators and keywords
 
-```bash
+```shell
 # Good
 if [[ -f "$file" ]]; then
   echo "Processing $file"
@@ -280,7 +271,7 @@ fi
 - Limit lines to 100 characters maximum
 - Break long commands for readability
 
-```bash
+```shell
 # Good
 yt-dlp \
   --flat-playlist \
@@ -293,7 +284,7 @@ yt-dlp \
 - Always quote variable expansions: `"$variable"`
 - Quote strings containing spaces or special characters
 
-```bash
+```shell
 # Good
 mv "$file" "$new_name"
 echo "Processing file: $filename"
@@ -304,7 +295,7 @@ echo "Processing file: $filename"
 #### Script Options
 Always include `set -euo pipefail` at the top of scripts:
 
-```bash
+```shell
 #!/bin/bash
 set -euo pipefail  # Exit on error, undefined vars, pipeline failures
 ```
@@ -312,7 +303,7 @@ set -euo pipefail  # Exit on error, undefined vars, pipeline failures
 #### Input Validation
 Validate all inputs early in the script:
 
-```bash
+```shell
 # Check argument count
 if [ "$#" -lt 1 ]; then
   echo "Error: Missing required argument"
@@ -337,7 +328,7 @@ fi
 - Include helpful context and suggestions
 - Exit with appropriate codes (1 for general errors)
 
-```bash
+```shell
 # Good
 if [[ ! -d "$output_dir" ]]; then
   echo "Error: Output directory '$output_dir' does not exist"
@@ -353,7 +344,7 @@ fi
 - Add brief documentation comments
 - Keep functions small (under 20 lines)
 
-```bash
+```shell
 # Generate timestamp-based filename
 # Arguments: prefix, extension
 # Returns: filename string
@@ -378,7 +369,7 @@ generate_filename() {
 - Add space after `#`
 - Keep comments concise but descriptive
 
-```bash
+```shell
 # Good
 # Generate channel video list using yt-dlp
 yt-dlp --flat-playlist "https://youtube.com/@$channel" > "$output_file"
@@ -393,7 +384,7 @@ fi
 - Add brief description above each function
 - Document parameters and return values
 
-```bash
+```shell
 # Extract video IDs from channel list file
 # Arguments:
 #   $1: Input file containing video titles and IDs
@@ -409,7 +400,7 @@ extract_video_urls() { ... }
 - Use arrays for complex command arguments
 - Avoid eval and dangerous constructs
 
-```bash
+```shell
 # Good - safe command construction
 yt_dlp_args=(
   --flat-playlist
@@ -424,7 +415,7 @@ yt-dlp "${yt_dlp_args[@]}" > "$output_file"
 - Check permissions before file operations
 - Clean up temporary files
 
-```bash
+```shell
 # Good
 temp_file=$(mktemp)
 trap 'rm -f "$temp_file"' EXIT
