@@ -61,9 +61,3 @@ Delete session:
 ```shell
 tmux kill-session -t download
 ```
-
-## Mise
-
-```shell
-mise ls -l
-```
