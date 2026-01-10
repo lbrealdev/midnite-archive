@@ -1,0 +1,24 @@
+# Midnite/Akae Beka YouTube Channels
+# Add your discovered YouTube channel URLs below, one per line
+
+# Official Channels
+# https://www.youtube.com/@MidniteOfficial
+# https://www.youtube.com/@AkaeBekaOfficial
+
+# Fan Channels & Community Content
+# https://www.youtube.com/@MidniteAkaeBekaFans
+# https://www.youtube.com/@ReggaeRootsMidnite
+
+# Related Artists & Collaborators
+# https://www.youtube.com/@VaughnBenjaminSolo
+# https://www.youtube.com/@RasBatch
+
+# Live Performances & Tours
+# https://www.youtube.com/@MidniteLive
+# https://www.youtube.com/@AkaeBekaTours
+
+# Interview & Documentary Channels
+# https://www.youtube.com/@MidniteInterviews
+# https://www.youtube.com/@ReggaeDocumentary
+
+# Add more channels as you discover them...
