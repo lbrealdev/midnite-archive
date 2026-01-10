@@ -104,13 +104,15 @@ Operational guidelines for documentation and project maintenance.
 - Include table of contents for longer documents
 
 **Git Operations**
-- Never commit to main
+- NEVER commit to main
 - If requested and the branch is `main`, abort and notify
-- Never commit in build mode
-- Only commit in build mode if explicitly ordered
+- NEVER commit in build mode
+- ONLY commit in build mode if explicitly ordered by the user
+- ALWAYS ask for confirmation before committing, even in Build mode
+- ALWAYS verify user intent before proceeding with any commit
 - Commit in English in a clear and concise tone for users and developers
-- Only make one-line commits
-- Only commit multiple lines if explicitly ordered
+- ONLY make one-line commits
+- ONLY commit multiple lines if explicitly ordered
 - Add a special command like `@help commit`
 - If the user uses the special command, provide a commit example for the last change
 - @refresh works in build or plan mode
