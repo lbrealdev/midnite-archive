@@ -10,8 +10,15 @@ A collection of bash scripts for archiving the extensive YouTube content of the 
 - Batch rename downloaded files for better organization
 - EJS-powered reliability for handling YouTube's JavaScript challenges
 
+
+
 - **Requirements:** See [requirements](docs/requirements.md) for setup instructions.
 - **Troubleshooting:** Check [troubleshooting](docs/troubleshooting.md) for common issues.
+
+## Table of Contents
+
+- [Requirements](docs/requirements.md) - Setup and installation guide
+- [Troubleshooting](docs/troubleshooting.md) - Common issues and solutions
 
 ## Usage
 
