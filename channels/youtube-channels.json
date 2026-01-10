@@ -1,0 +1,44 @@
+{
+  "channels": [
+    {
+      "url": "https://www.youtube.com/@MidniteOfficial",
+      "category": "official"
+    },
+    {
+      "url": "https://www.youtube.com/@AkaeBekaOfficial",
+      "category": "official"
+    },
+    {
+      "url": "https://www.youtube.com/@MidniteAkaeBekaFans",
+      "category": "fan"
+    },
+    {
+      "url": "https://www.youtube.com/@ReggaeRootsMidnite",
+      "category": "fan"
+    },
+    {
+      "url": "https://www.youtube.com/@VaughnBenjaminSolo",
+      "category": "related"
+    },
+    {
+      "url": "https://www.youtube.com/@RasBatch",
+      "category": "related"
+    },
+    {
+      "url": "https://www.youtube.com/@MidniteLive",
+      "category": "live"
+    },
+    {
+      "url": "https://www.youtube.com/@AkaeBekaTours",
+      "category": "live"
+    },
+    {
+      "url": "https://www.youtube.com/@MidniteInterviews",
+      "category": "interviews"
+    },
+    {
+      "url": "https://www.youtube.com/@ReggaeDocumentary",
+      "category": "interviews"
+    }
+  ]
+}
