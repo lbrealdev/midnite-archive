@@ -1,44 +1,34 @@
 {
   "channels": [
     {
-      "url": "https://www.youtube.com/@MidniteOfficial",
-      "category": "official"
+      "url": "https://www.youtube.com/@MidniteOfficial"
     },
     {
-      "url": "https://www.youtube.com/@AkaeBekaOfficial",
-      "category": "official"
+      "url": "https://www.youtube.com/@AkaeBekaOfficial"
     },
     {
-      "url": "https://www.youtube.com/@MidniteAkaeBekaFans",
-      "category": "fan"
+      "url": "https://www.youtube.com/@MidniteAkaeBekaFans"
     },
     {
-      "url": "https://www.youtube.com/@ReggaeRootsMidnite",
-      "category": "fan"
+      "url": "https://www.youtube.com/@ReggaeRootsMidnite"
     },
     {
-      "url": "https://www.youtube.com/@VaughnBenjaminSolo",
-      "category": "related"
+      "url": "https://www.youtube.com/@VaughnBenjaminSolo"
     },
     {
-      "url": "https://www.youtube.com/@RasBatch",
-      "category": "related"
+      "url": "https://www.youtube.com/@RasBatch"
     },
     {
-      "url": "https://www.youtube.com/@MidniteLive",
-      "category": "live"
+      "url": "https://www.youtube.com/@MidniteLive"
     },
     {
-      "url": "https://www.youtube.com/@AkaeBekaTours",
-      "category": "live"
+      "url": "https://www.youtube.com/@AkaeBekaTours"
     },
     {
-      "url": "https://www.youtube.com/@MidniteInterviews",
-      "category": "interviews"
+      "url": "https://www.youtube.com/@MidniteInterviews"
     },
     {
-      "url": "https://www.youtube.com/@ReggaeDocumentary",
-      "category": "interviews"
+      "url": "https://www.youtube.com/@ReggaeDocumentary"
     }
   ]
 }

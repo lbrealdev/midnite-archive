@@ -4,7 +4,7 @@ This directory contains curated YouTube channels with content related to Midnite
 
 ## Files
 
-- `youtube-channels.json` - JSON file containing YouTube channel URLs and categories
+- `youtube-channels.json` - JSON file containing YouTube channel URLs
 
 ## Categories
 
@@ -17,15 +17,14 @@ This directory contains curated YouTube channels with content related to Midnite
 ## Contributing
 
 To add new channels:
+
 1. Add a new object to the `channels` array in `youtube-channels.json`
-2. Include `url` and `category` fields
+2. Include only the `url` field
 3. Test that the channel exists and has relevant content
-4. Use existing categories or add new ones as needed
 
 Example:
 ```json
 {
-  "url": "https://www.youtube.com/@NewChannel",
-  "category": "fan"
+  "url": "https://www.youtube.com/@NewChannel"
 }
 ```
