@@ -2,3 +2,4 @@
 shellcheck = "latest"
 deno = "latest"
 yt-dlp = "latest"
+jq = "latest"

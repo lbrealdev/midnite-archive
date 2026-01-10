@@ -36,3 +36,15 @@ For advanced users or custom list generation, you can use yt-dlp directly. The c
 ```shell
 uvx -p 3.12 yt-dlp@latest --flat-playlist --print "%(title)s-%(id)s" https://www.youtube.com/@ChannelName > ChannelName-$(date +%Y%m%d).txt
 ```
+
+## Analyze Channel Data
+
+#### Get All URLs
+```shell
+cat youtube-channels.json | jq -r '.channels[].url'
+```
+
+#### Count Total Channels
+```shell
+cat youtube-channels.json | jq '.channels | length'
+```
