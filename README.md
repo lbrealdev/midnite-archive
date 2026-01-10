@@ -2,13 +2,12 @@
 
 ## Description
 
-A collection of bash scripts for archiving YouTube content using yt-dlp with External JavaScript (EJS) support. Originally created for preserving the extensive discography of the band Midnite/Akae Beka, these tools can archive any YouTube channel, playlist, or individual video.
+A collection of bash scripts for archiving the extensive YouTube content of the reggae band **Midnite/Akae Beka** from our beloved teacher and guide Vaughn Benjamin. Uses yt-dlp with External JavaScript (EJS) support for reliable downloads despite YouTube's frequent changes.
 
 **Key Features:**
-- Generate comprehensive video lists from YouTube channels
-- Download videos with metadata and thumbnails
-- Extract video comments and discussions
-- Batch rename downloaded files
+- Generate comprehensive video lists from Midnite/Akae Beka's YouTube channels
+- Download videos with metadata, thumbnails, and comments
+- Batch rename downloaded files for better organization
 - EJS-powered reliability for handling YouTube's JavaScript challenges
 
 **Requirements:** See [requirements](docs/requirements.md) for setup instructions.
