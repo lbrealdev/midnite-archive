@@ -3,6 +3,35 @@
 ## Overview
 This document provides guidelines for contributing to the midnite-archive codebase. The project consists of bash scripts for YouTube video archiving using `yt-dlp` and `ffmpeg`.
 
+## Rule Priority Hierarchy
+
+All rules in this document follow a strict priority hierarchy. Higher priority rules override lower priority rules when conflicts occur:
+
+### Priority 1: Core Operational Rules (Highest Priority)
+- Behaviors and work rules from AGENTS.md have absolute priority
+- Special commands (@refresh, @do, @help commit) override general guidelines
+- Mode restrictions (Plan vs Build) cannot be violated
+
+### Priority 2: Authorization & Safety Protocols
+- @do authorization requirements for commits
+- Git operation restrictions (never commit to main, build mode limitations)
+- Security and safety guidelines
+
+### Priority 3: Operational Guidelines
+- Special command behaviors and limitations
+- Documentation standards and formatting rules
+- Quality assurance procedures
+
+### Priority 4: Development Standards
+- Code style and naming conventions
+- Best practices for maintainability
+- Tool usage guidelines
+
+### Priority 5: General Recommendations (Lowest Priority)
+- Performance optimizations
+- Compatibility considerations
+- Enhancement suggestions
+
 ## Agents Behavior Guidelines
 
 This section outlines behavioral guidelines for AI agents working on the midnite-archive project. These rules ensure safe, responsible, and effective collaboration while maintaining code quality and security.
@@ -91,12 +120,6 @@ This section outlines behavioral guidelines for AI agents working on the midnite
 
 Operational guidelines for documentation and project maintenance.
 
-**Agent Sync**
-- Scan the AGENTS.md file for 5 minutes
-- Synchronize the assistant without the user explicitly requesting it
-- Add a special command like `@refresh`
-- If the user uses the special command, provide brief reasoning and respond with `Synchronized`
-
 **Markdown Files**
 - For command examples always use ```shell
 - Never use ```bash for command examples
@@ -115,8 +138,8 @@ Operational guidelines for documentation and project maintenance.
 - ONLY commit multiple lines if explicitly ordered
 - Add a special command like `@help commit`
 - If the user uses the special command, provide a commit example for the last change
-- @refresh works in build or plan mode
-- @refresh purpose is that the agent read the last changes in AGENTS.md and enforce it
+- @refresh works in plan or build mode
+- @refresh is only for updating this information and working on this line and nothing else
 
 ### Quality Assurance
 
@@ -130,9 +153,9 @@ Operational guidelines for documentation and project maintenance.
 
 All commands in this section are special commands enabled by the agent for enhanced interaction and workflow management:
 
-- `@refresh` - Synchronizes agent with latest repository state and AGENTS.md guidelines
-- `@help commit` - Provides commit guidance and examples for current changes with `git commit -am`
-- `@do` - Authorizes the agent to commit pending changes (must appear in user message)
+- `@refresh` - Add a special command to update your memory regarding the latest changes to the AGENTS.md file
+- `@help commit` - Provide examples of commits for the current changes, always include `git commit -am` in the recommendations
+- `@do` - Authorizes the agent to commit pending changes (must appear in user message), @do only works in build mode
 
 ## Build/Lint/Test Commands
 
@@ -437,20 +460,16 @@ trap 'rm -f "$temp_file"' EXIT
 
 ### Best Practices
 
-#### Performance
-- Use efficient commands (e.g., `grep` instead of `sed` for simple matches)
-- Process files in streams when possible
-- Avoid unnecessary forks
-
-#### Maintainability
-- Write self-documenting code
-- Use meaningful variable names
+#### Code Quality
+- Write self-documenting code with meaningful variable names
+- Use POSIX-compliant syntax for maximum compatibility
 - Keep scripts modular and reusable
 
-#### Compatibility
-- Use POSIX-compliant syntax where possible
-- Test on multiple environments
-- Document system requirements
+#### Operational Workflow
+- Use `@refresh` to synchronize with latest AGENTS.md guidelines
+- Employ `@help commit` for commit message guidance
+- Include `@do` in user messages to authorize commits
+- Respect Plan Mode restrictions: read-only operations only
 
 ### Pre-commit Checklist
 
