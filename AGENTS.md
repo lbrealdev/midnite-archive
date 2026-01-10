@@ -132,7 +132,7 @@ Operational guidelines for documentation and project maintenance.
 All commands in this section are special commands enabled by the agent for enhanced interaction and workflow management:
 
 - `@refresh` - Synchronizes agent with latest repository state and AGENTS.md guidelines
-- `@help commit` - Provides commit guidance and examples for current changes
+- `@help commit` - Provides commit guidance and examples for current changes with `git commit -am`
 - `@do` - Authorizes the agent to commit pending changes (must be included in commit request)
 
 ## Build/Lint/Test Commands
@@ -470,4 +470,4 @@ Before committing changes:
 3. Write script following these guidelines
 4. Test thoroughly with various inputs
 5. Run linting: `shellcheck your-script.sh`
-6. Commit with descriptive message
+6. Commit with descriptive message containing `@do` authorization command
