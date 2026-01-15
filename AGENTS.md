@@ -217,3 +217,33 @@ Agents MUST NOT:
 - Linting issues resolved
 - Documentation renders correctly
 - Commands tested in clean environment
+
+---
+
+## 17. Commit Message Conventions
+
+Agents MUST follow conventional commits format for all commit messages.
+
+### Format
+- Structure: `type(scope): description`
+- Example: `feat(scripts): add recursive file renaming support`
+
+### Types
+- `feat`: New features or enhancements
+- `fix`: Bug fixes
+- `docs`: Documentation changes
+- `refactor`: Code restructuring without functional changes
+- `chore`: Maintenance tasks (e.g., tool updates)
+- `test`: Test-related changes
+
+### Guidelines
+- Use lowercase for type and scope
+- Keep description concise (1-2 sentences) and imperative
+- Focus on "why" the change was made, not "what" (avoid "changed X to Y")
+- Capitalize first word of description
+- No trailing period
+- For multi-line, separate body with blank line
+
+### Examples
+- Good: `refactor(video): optimize file search for large directories`
+- Bad: `updated the script` (too vague, no type)
