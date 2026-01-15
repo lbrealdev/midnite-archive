@@ -19,9 +19,7 @@ echo "$DIRECTORY_FULL_PATH"
 function rename() {
   echo "Renaming files..."
 
-  for file in *.{mkv,description}; do
-    mv "$file" "${file// /_}"
-  done
+  find . -type f \( -name "*.mkv" -o -name "*.description" \) -exec bash -c 'mv "$1" "${1// /_}"' _ {} \;
 }
 
 if [[ -d "$DIRECTORY_FULL_PATH" ]]; then
