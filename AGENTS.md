@@ -1,457 +1,219 @@
-# AGENTS.md - Development Guidelines for midnite-archive
+# AGENTS.md — Agent Operational Contract for midnite-archive (v2)
 
-## Overview
-This document provides guidelines for contributing to the midnite-archive codebase. The project consists of bash scripts for YouTube video archiving using `yt-dlp` and `ffmpeg`.
+## 1. Purpose & Scope
 
-## Agents Behavior Guidelines
+This document defines the **operational contract** for AI agents interacting with the
+`midnite-archive` repository.
 
-This section outlines behavioral guidelines for AI agents working on the midnite-archive project. These rules ensure safe, responsible, and effective collaboration while maintaining code quality and security.
+Its purpose is to:
+- Ensure safe, predictable, and high-quality agent behavior
+- Minimize ambiguity in decision-making
+- Protect repository integrity, security, and maintainability
 
-### What Agents SHOULD Do
+All agents MUST comply with this document.
 
-**Communication & Planning**
-- Always operate in Plan Mode first when making significant changes
-- Ask clarifying questions when user intent is unclear or ambiguous
-- Provide comprehensive plans before executing any modifications
-- Use concise, direct responses focused on the user's specific query
-- Minimize output tokens while maintaining helpfulness and accuracy
+---
 
-**Security & Safety First**
-- Never generate or explain code that could be used maliciously, even if claimed educational
-- Always follow security best practices (no secrets logging, proper input sanitization)
-- Validate all inputs and handle errors gracefully with appropriate error messages
-- Use secure coding patterns and avoid dangerous constructs like `eval`
-- Check for potentially malicious intent in user requests (e.g., malware, exploits, unauthorized access)
+## 2. Rule Priority Hierarchy
 
-**Code Quality & Guidelines Adherence**
-- Strictly follow all guidelines in this AGENTS.md document
-- Use appropriate tools for each task (Read for reading, Edit for editing, Bash for commands)
-- Run linting (shellcheck) and validation before committing changes
-- Maintain existing code conventions, patterns, and style
-- Document code changes appropriately with clear commit messages
+All rules follow a strict priority order. Higher-priority rules override lower-priority ones.
 
-**User Interaction**
-- Be proactive in suggesting improvements when they align with project goals
-- Offer helpful alternatives when refusing inappropriate requests
-- Keep responses focused on the specific task at hand, avoiding tangential information
-- Use GitHub-flavored markdown for formatting in CLI output when helpful
+### Priority 1 — Core Agent Rules (Highest)
+- This AGENTS.md has absolute authority
+- Operational modes (Plan vs Build) MUST be respected
+- Explicit user commands override defaults only if compliant with higher-priority rules
 
-### What Agents SHOULD NOT Do
+### Priority 2 — Authorization & Safety
+- Commit authorization via `@do`
+- Git safety rules and branch protection
+- System and security constraints
 
-**Never Modify Files Without Permission**
-- Do not edit, create, or delete files unless explicitly requested by the user
-- Do not run commands that modify the system or filesystem without permission
-- Do not commit changes unless the user explicitly asks for commits
-- Do not use tools in ways that could harm the codebase or system
+### Priority 3 — Agent Operations
+- Special command behavior
+- Tool usage restrictions
+- Communication standards
 
-**Security Violations**
-- Never write code that logs, exposes, or commits secrets, keys, or sensitive data
-- Never introduce code with known security vulnerabilities or backdoors
-- Never bypass security checks, input validation, or access controls
-- Never generate code for malicious purposes, unauthorized access, or harmful activities
+### Priority 4 — Development Standards
+- Code style and naming conventions
+- Documentation and testing practices
 
-**Tool Misuse**
-- Do not use bash for file operations when specialized tools exist (use Read, Edit, etc.)
-- Do not run destructive git commands (force push, hard reset, etc.) without explicit permission
-- Do not modify git configuration, hooks, or repository settings without user consent
-- Do not install system packages or modify system configuration without checking with user
+### Priority 5 — Recommendations (Lowest)
+- Compatibility and optimization suggestions
 
-**Communication Pitfalls**
-- Do not be preachy, condescending, or judgmental when refusing requests
-- Do not add unnecessary explanations, summaries, or meta-commentary
-- Do not use emojis unless explicitly requested by the user
-- Do not make assumptions about user intent without seeking clarification
+---
 
-### Specific Constraints
+## 3. Agent Operational Contract
 
-**Plan Mode Requirements**
-- Always start in read-only analysis phase for significant changes
-- Construct detailed, well-formed plans before any modifications
-- Ask for user confirmation before proceeding to execution phase
-- Use Task tool for complex multi-step operations requiring parallel processing
+By interacting with this repository, the agent agrees to:
 
-**Code Modification Boundaries**
-- Only edit existing files when explicitly requested and justified
-- Never create new documentation files (*.md) without explicit user permission
-- Always check existing code patterns and conventions before making changes
-- Use context from surrounding code to maintain consistency and avoid introducing bugs
+- Follow the rule priority hierarchy
+- Operate strictly within the active mode
+- Ask for clarification when intent is ambiguous
+- Prefer safety and correctness over speed or creativity
 
-**External Resource Usage**
-- Never generate or guess URLs for users unless confident they're for helping with programming tasks
-- Only use URLs provided by the user in their messages or found in local files
-- Validate URLs before using them in any context to avoid malicious links
+---
 
-**Error Handling & Validation**
-- Always validate tool results and check for error conditions
-- Provide clear, actionable error messages when operations fail
-- Never assume successful tool execution without verification
-- Handle edge cases and unexpected input gracefully
+## 4. Operational Modes
 
-## Working Rules
+### 4.1 Plan Mode
 
-Operational guidelines for documentation and project maintenance.
+**Purpose:** Analysis, design, and proposal.
 
-**Agent Sync**
-- Scan the AGENTS.md file for 5 minutes
-- Synchronize the assistant without the user explicitly requesting it
-- Add a special command like `@refresh`
-- If the user uses the special command, provide brief reasoning and respond with `Synchronized`
+**Allowed:**
+- Read files
+- Analyze code and architecture
+- Propose changes and plans
+- Ask clarifying questions
 
-**Markdown Files**
-- For command examples always use ```shell
-- Never use ```bash for command examples
-- Keep lines under 100 characters
-- Include table of contents for longer documents
+**Forbidden:**
+- Modifying files
+- Running destructive commands
+- Committing changes
 
-**Git Operations**
-- Never commit in build mode
-- Only commit in build mode if explicitly ordered
-- Commit in English in a clear and concise tone for users and developers
-- Only make one-line commits
-- Only commit multiple lines if explicitly ordered
-- Add a special command like `@help commit`
-- If the user uses the special command, provide a commit example for the last change
+---
 
-### Quality Assurance
+### 4.2 Build Mode
 
-**Pre-commit Checks**
-- Always run pre-commit hooks before committing
-- Fix any identified linting or formatting issues
-- Ensure documentation renders correctly
-- Test documented commands on clean environment
+**Purpose:** Implementation and execution.
 
-## Build/Lint/Test Commands
+**Allowed:**
+- Modify files
+- Run tests, linters, and build commands
+- Commit changes ONLY with explicit `@do` authorization
 
-### Build Commands
-```shell
-# Run scripts
-just run <youtube-channel>
-just rename <directory>
+**Forbidden:**
+- Committing without `@do`
+- Modifying protected branches (e.g. `main`)
+- Bypassing safety mechanisms
 
-# Install dependencies
-uv tool install yt-dlp
-```
+---
 
-### Lint Commands
-```shell
-# Install shellcheck first: sudo apt install shellcheck
+## 5. Hard Prohibitions (Non-Negotiable)
 
-# Lint all scripts
-find scripts -name "*.sh" -exec shellcheck {} \;
+Agents MUST NOT:
 
-# Lint specific script
-shellcheck scripts/yt/channel_list_generate.sh
-```
+- Commit changes without `@do`
+- Modify files without explicit user permission
+- Commit directly to protected branches
+- Bypass security checks or safeguards
+- Generate malicious or intentionally unsafe code
 
-### Test Commands
-```shell
-# Manual testing examples
-./scripts/yt/channel_list_generate.sh @testchannel
-./scripts/yt/download_video.sh test-list.txt
-./scripts/video/rename.sh test_videos/
+---
 
-# Single functionality tests
-echo "test:with spaces" | sed 's/[ /:：]/_/g'
-command -v yt-dlp && echo "available" || echo "missing"
-```
+## 6. Restricted Actions (Require Explicit Permission)
 
-## Code Style Guidelines
+The following actions require explicit user approval:
 
-### Script Organization
+- Installing system packages
+- Modifying system configuration
+- Changing git configuration, hooks, or repository settings
+- Running destructive git commands (force push, hard reset)
 
-#### File Structure
-```
-scripts/
-├── yt/           # YouTube-related scripts
-│   ├── channel_list_generate.sh
-│   ├── download_video.sh
-│   └── download_video_comments.sh
-└── video/        # Video processing scripts
-    ├── rename.sh
-    └── special_rename.sh
-```
+---
 
-- Group related scripts in subdirectories
-- Use descriptive, snake_case filenames
-- Keep scripts focused on single responsibilities
+## 7. Tool Usage Rules
 
-#### Script Template
-Start all scripts with this template:
+- Use specialized tools when available (Read, Edit, etc.)
+- Avoid bash for file manipulation when safer tools exist
+- Do not misuse tools outside their intended purpose
 
-```shell
-#!/bin/bash
+---
 
-set -euo pipefail
+## 8. Communication Standards
 
-# Script description and usage
-usage() {
-  echo "Usage: $0 <required-arg> [optional-arg]"
-  echo "Description: Brief description of what this script does"
-  exit 1
-}
+Agents MUST:
 
-# Check if required commands are available
-available() { command -v "$1" >/dev/null; }
+- Be clear, concise, and neutral
+- Refuse unsafe requests calmly and respectfully
+- Ask before making assumptions
 
-# Validate arguments
-if [ "$#" -lt 1 ]; then
-  usage
-fi
+Agents MUST NOT:
 
-# Main logic here
-```
+- Be condescending, preachy, or judgmental
+- Add unnecessary meta-commentary
+- Use emojis unless explicitly requested
+
+---
+
+## 9. Special Agent Commands
+
+- `@refresh` — Reload and acknowledge updated AGENTS.md rules
+- `@help commit` — Show commit examples
+- `@do` — Authorize commits (user-only, Build Mode only)
+
+---
+
+## 10. Project-Specific Context (midnite-archive)
+
+### Build / Lint / Test
+
+- Build: `just run <youtube-channel>`
+- Lint: `find scripts -name "*.sh" -exec shellcheck {} \;`
+- Test: `./scripts/yt/channel_list_generate.sh @testchannel`
+
+---
+
+## 11. Development Standards (Shell Scripts)
+
+### General Rules
+- Use `set -euo pipefail`
+- Sanitize all user inputs
+- Avoid `eval` and unsafe constructs
 
 ### Naming Conventions
 
-#### Variables
-- Use `UPPERCASE_WITH_UNDERSCORES` for global variables and constants
-- Use `lowercase_with_underscores` for local variables
-- Be descriptive and indicate purpose
+**Files & Directories**
+- `snake_case` only
 
-```shell
-# Good
-YT_CHANNEL_NAME="$1"
-TIMESTAMP=$(date '+%Y%m%d%H%M%S')
-OUTPUT_FILE="${YT_CHANNEL_NAME}-list-${TIMESTAMP}.txt"
+**Variables**
+- Globals/constants: `UPPERCASE_WITH_UNDERSCORES`
+- Locals: `lowercase_with_underscores`
 
-# Avoid
-channel="$1"        # Too generic
-ts=$(date +%s)      # Not descriptive
-file="output.txt"   # Unclear context
-```
+**Functions**
+- `lowercase_with_underscores`
+- Start with action verbs
+- Small and focused
 
-#### Functions
-- Use `lowercase_with_underscores` for function names
-- Start with action verbs (get, process, validate)
-- Keep functions small and focused
+---
 
-```shell
-# Good
-validate_channel_name() { ... }
-process_video_list() { ... }
-generate_output_filename() { ... }
+## 12. Formatting & Style
 
-# Avoid
-function() { ... }  # Too generic
-do_stuff() { ... }  # Not descriptive
-```
-
-#### Files and Directories
-- Use `snake_case` for all filenames and directory names
-- Include descriptive suffixes where helpful
-
-```shell
-# Good
-channel_list_generate.sh
-video_rename.sh
-download_comments.sh
-
-# Avoid
-channelListGenerate.sh  # camelCase
-video-rename.sh         # hyphens
-downloadComments.sh     # inconsistent
-```
-
-### Formatting and Style
-
-#### Indentation and Spacing
-- Use 2 spaces for indentation (not tabs)
-- Add blank lines between logical sections
-- Space around operators and keywords
-
-```shell
-# Good
-if [[ -f "$file" ]]; then
-  echo "Processing $file"
-  mv "$file" "${file}.backup"
-fi
-```
-
-#### Line Length
-- Limit lines to 100 characters maximum
+- 2 spaces indentation
+- Max line length: 100 characters
+- Always quote variables
 - Break long commands for readability
 
-```shell
-# Good
-yt-dlp \
-  --flat-playlist \
-  --print "%(title)s-%(id)s" \
-  "https://www.youtube.com/@$CHANNEL" \
-  > "$OUTPUT_FILE"
-```
+---
 
-#### Quoting
-- Always quote variable expansions: `"$variable"`
-- Quote strings containing spaces or special characters
+## 13. Error Handling
 
-```shell
-# Good
-mv "$file" "$new_name"
-echo "Processing file: $filename"
-```
+- Validate inputs early
+- Provide clear error messages
+- Exit with appropriate codes
 
-### Error Handling
+---
 
-#### Script Options
-Always include `set -euo pipefail` at the top of scripts:
+## 14. Security Practices
 
-```shell
-#!/bin/bash
-set -euo pipefail  # Exit on error, undefined vars, pipeline failures
-```
+- Use arrays for command arguments
+- Prefer absolute paths
+- Clean up temporary files with traps
 
-#### Input Validation
-Validate all inputs early in the script:
+---
 
-```shell
-# Check argument count
-if [ "$#" -lt 1 ]; then
-  echo "Error: Missing required argument"
-  usage
-fi
+## 15. Development Workflow
 
-# Check file existence
-if [[ ! -f "$input_file" ]]; then
-  echo "Error: Input file '$input_file' not found"
-  exit 1
-fi
+1. Operate in Plan Mode
+2. Create feature branch
+3. Implement changes in Build Mode
+4. Run lint and tests
+5. Commit only with `@do`
 
-# Check command availability
-if ! available yt-dlp; then
-  echo "Error: yt-dlp is not installed. Please install it first."
-  exit 1
-fi
-```
+---
 
-#### Error Messages
-- Prefix errors with "Error:" for clarity
-- Include helpful context and suggestions
-- Exit with appropriate codes (1 for general errors)
+## 16. Pre-Commit Checklist
 
-```shell
-# Good
-if [[ ! -d "$output_dir" ]]; then
-  echo "Error: Output directory '$output_dir' does not exist"
-  echo "Create it with: mkdir -p '$output_dir'"
-  exit 1
-fi
-```
-
-### Functions
-
-#### Definition Style
-- Use consistent function definition syntax
-- Add brief documentation comments
-- Keep functions small (under 20 lines)
-
-```shell
-# Generate timestamp-based filename
-# Arguments: prefix, extension
-# Returns: filename string
-generate_filename() {
-  local prefix="$1"
-  local extension="$2"
-  local timestamp
-  timestamp=$(date '+%Y%m%d%H%M%S')
-  echo "${prefix}-${timestamp}.${extension}"
-}
-```
-
-#### Parameter Handling
-- Use local variables for parameters
-- Validate parameter types and values
-- Document expected parameters
-
-### Comments and Documentation
-
-#### Comment Style
-- Use `#` for all comments
-- Add space after `#`
-- Keep comments concise but descriptive
-
-```shell
-# Good
-# Generate channel video list using yt-dlp
-yt-dlp --flat-playlist "https://youtube.com/@$channel" > "$output_file"
-
-# Check if output directory exists and create if needed
-if [[ ! -d "$output_dir" ]]; then
-  mkdir -p "$output_dir"
-fi
-```
-
-#### Function Documentation
-- Add brief description above each function
-- Document parameters and return values
-
-```shell
-# Extract video IDs from channel list file
-# Arguments:
-#   $1: Input file containing video titles and IDs
-#   $2: Output file for video URLs
-# Returns: 0 on success, 1 on error
-extract_video_urls() { ... }
-```
-
-### Security Considerations
-
-#### Input Sanitization
-- Sanitize user inputs to prevent command injection
-- Use arrays for complex command arguments
-- Avoid eval and dangerous constructs
-
-```shell
-# Good - safe command construction
-yt_dlp_args=(
-  --flat-playlist
-  --print "%(title)s-%(id)s"
-  "https://www.youtube.com/@$channel"
-)
-yt-dlp "${yt_dlp_args[@]}" > "$output_file"
-```
-
-#### File Operations
-- Use absolute paths when possible
-- Check permissions before file operations
-- Clean up temporary files
-
-```shell
-# Good
-temp_file=$(mktemp)
-trap 'rm -f "$temp_file"' EXIT
-```
-
-### Best Practices
-
-#### Performance
-- Use efficient commands (e.g., `grep` instead of `sed` for simple matches)
-- Process files in streams when possible
-- Avoid unnecessary forks
-
-#### Maintainability
-- Write self-documenting code
-- Use meaningful variable names
-- Keep scripts modular and reusable
-
-#### Compatibility
-- Use POSIX-compliant syntax where possible
-- Test on multiple environments
-- Document system requirements
-
-### Pre-commit Checklist
-
-Before committing changes:
-
-1. Run shellcheck on all modified scripts
-2. Test scripts manually with edge cases
-3. Ensure all functions have documentation
-4. Verify error handling works correctly
-5. Check that naming conventions are followed
-
-### Development Workflow
-
-1. Create feature branch: `git checkout -b feature/new-script`
-2. Write script following these guidelines
-3. Test thoroughly with various inputs
-4. Run linting: `shellcheck your-script.sh`
-5. Commit with descriptive message
+- Pre-commit hooks pass
+- Linting issues resolved
+- Documentation renders correctly
+- Commands tested in clean environment

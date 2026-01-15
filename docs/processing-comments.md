@@ -2,6 +2,10 @@
 
 This document explains how to process YouTube comment data downloaded by yt-dlp. The comments are stored in JSON format and can be processed using jq to extract specific information.
 
+## Summary
+
+YouTube comments downloaded by yt-dlp are stored as JSON files with the pattern `video_id.comments.json`. This guide provides practical jq commands to extract usernames, comment text, and other metadata from these files. All commands use the `cat file.json | jq ...` format for consistency and readability.
+
 ## Comment JSON Structure
 
 YouTube comment JSON files typically have this structure:
@@ -34,33 +38,33 @@ YouTube comment JSON files typically have this structure:
 ### Get All Comments with Usernames
 ```shell
 # Extract username and comment text as JSON
-jq '.comments[] | {username: .author.name, comment: .text}' video_id.comments.json
+cat video_id.comments.json | jq '.comments[] | {username: .author.name, comment: .text}'
 
 # Extract as simple text format
-jq -r '.comments[] | "\(.author.name): \(.text)"' video_id.comments.json
+cat video_id.comments.json | jq -r '.comments[] | "\(.author.name): \(.text)"'
 ```
 
 ### Filter Comments by Username
 ```shell
 # Find comments by specific user
-jq '.comments[] | select(.author.name == "Username") | {username: .author.name, comment: .text}' video_id.comments.json
+cat video_id.comments.json | jq '.comments[] | select(.author.name == "Username") | {username: .author.name, comment: .text}'
 ```
 
 ### Count Total Comments
 ```shell
-jq '.comments | length' video_id.comments.json
+cat video_id.comments.json | jq '.comments | length'
 ```
 
 ### Extract Only Usernames
 ```shell
 # Get list of all usernames who commented
-jq -r '.comments[].author.name' video_id.comments.json | sort | uniq
+cat video_id.comments.json | jq -r '.comments[].author.name' | sort | uniq
 ```
 
 ### Extract Only Comment Text
 ```shell
 # Get all comment text
-jq -r '.comments[].text' video_id.comments.json
+cat video_id.comments.json | jq -r '.comments[].text'
 ```
 
 ## Advanced Processing
@@ -68,19 +72,19 @@ jq -r '.comments[].text' video_id.comments.json
 ### Comments with Timestamps
 ```shell
 # Include timestamps in output
-jq -r '.comments[] | "\(.author.name) [\(.time_text)]: \(.text)"' video_id.comments.json
+cat video_id.comments.json | jq -r '.comments[] | "\(.author.name) [\(.time_text)]: \(.text)"'
 ```
 
 ### Comments with Like Counts
 ```shell
 # Include like counts for popular comments
-jq '.comments[] | select(.like_count > 10) | {username: .author.name, comment: .text, likes: .like_count}' video_id.comments.json
+cat video_id.comments.json | jq '.comments[] | select(.like_count > 10) | {username: .author.name, comment: .text, likes: .like_count}'
 ```
 
 ### Export to CSV Format
 ```shell
 # Create CSV output
-jq -r '.comments[] | "\(.author.name),\(.text | gsub("\"";"\"\"") | "\"\(.)\"")"' video_id.comments.json > comments.csv
+cat video_id.comments.json | jq -r '.comments[] | "\(.author.name),\(.text | gsub("\"";"\"\"") | "\"\(.)\"")"' > comments.csv
 ```
 
 ## Batch Processing Multiple Files
@@ -90,7 +94,7 @@ jq -r '.comments[] | "\(.author.name),\(.text | gsub("\"";"\"\"") | "\"\(.)\"")"
 # Extract all comments from all JSON files
 for file in *.comments.json; do
   echo "Processing $file:"
-  jq -r '.comments[] | "\(.author.name): \(.text)"' "$file"
+  cat "$file" | jq -r '.comments[] | "\(.author.name): \(.text)"'
   echo "---"
 done
 ```
@@ -98,7 +102,7 @@ done
 ### Count Comments Across All Videos
 ```shell
 # Total comments across all video files
-find . -name "*.comments.json" -exec jq '.comments | length' {} \; | paste -sd+ | bc
+find . -name "*.comments.json" -exec sh -c 'cat "$1" | jq ".comments | length"' _ {} \; | paste -sd+ | bc
 ```
 
 ## Practical Examples
@@ -106,19 +110,19 @@ find . -name "*.comments.json" -exec jq '.comments | length' {} \; | paste -sd+ 
 ### Daily Comment Summary
 ```shell
 # Generate summary of comments by user
-jq -r '.comments[].author.name' video.comments.json | sort | uniq -c | sort -nr | head -10
+cat video.comments.json | jq -r '.comments[].author.name' | sort | uniq -c | sort -nr | head -10
 ```
 
 ### Search Comments by Keyword
 ```shell
 # Find comments containing specific words
-jq -r '.comments[] | select(.text | test("keyword"; "i")) | "\(.author.name): \(.text)"' video.comments.json
+cat video.comments.json | jq -r '.comments[] | select(.text | test("keyword"; "i")) | "\(.author.name): \(.text)"'
 ```
 
 ### Export for Analysis
 ```shell
 # Create analysis-ready format
-jq -r '.comments[] | {username: .author.name, comment: .text, timestamp: .timestamp, likes: .like_count}' video.comments.json > analysis.json
+cat video.comments.json | jq -r '.comments[] | {username: .author.name, comment: .text, timestamp: .timestamp, likes: .like_count}' > analysis.json
 ```
 
 ## Notes

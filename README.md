@@ -14,6 +14,8 @@ A collection of bash scripts for archiving the extensive YouTube content of the 
 
 - [Requirements](docs/requirements.md) - Setup and installation guide
 - [Troubleshooting](docs/troubleshooting.md) - Common issues and solutions
+- [Processing Comments](docs/processing-comments.md) - YouTube comment data extraction
+- [Channels](channels/README.md) - YouTube channel curation guide
 
 ## Usage
 

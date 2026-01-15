@@ -12,3 +12,6 @@ test.txt
 **/lists/
 **/videos/
 docs_**
+
+# IDEs and editors
+.idea/
