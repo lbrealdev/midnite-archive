@@ -19,9 +19,20 @@ echo "$DIRECTORY_FULL_PATH"
 function rename() {
   echo "Renaming files..."
 
-  for file in *.{mkv,description}; do
-    mv "$file" "${file// /_}"
-  done
+  local renamed_count=0
+  local total_files
+  total_files=$(find . -type f \( -name "*.mkv" -o -name "*.description" \) | wc -l)
+
+  while IFS= read -r file; do
+    newname="${file// /_}"
+    if [ "$file" != "$newname" ]; then
+      echo "Renaming: $file -> $newname"
+      mv "$file" "$newname"
+      ((renamed_count++))
+    fi
+  done < <(find . -type f \( -name "*.mkv" -o -name "*.description" \))
+
+  echo "Processed $total_files files, renamed $renamed_count."
 }
 
 if [[ -d "$DIRECTORY_FULL_PATH" ]]; then
