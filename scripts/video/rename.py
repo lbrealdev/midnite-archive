@@ -12,24 +12,18 @@ import re
 import sys
 from pathlib import Path
 
-# Characters to replace in advanced mode
-BAD_CHARS = r'[ /:：⧸\'"()[\]&|*?<>]'
+# Characters to replace
+BAD_CHARS = r'[ /:：⧸\'"()[\]&|*?<>,-]'
 
 
-def sanitize_filename_simple(filename: str) -> str:
-    """Replace spaces with underscores (simple mode)."""
-    return filename.replace(" ", "_")
-
-
-def sanitize_filename_advanced(filename: str) -> str:
-    """Replace bad characters with underscores, keeping hyphens (advanced mode)."""
+def sanitize_filename(filename: str) -> str:
+    """Replace bad characters with underscores."""
     return re.sub(BAD_CHARS, "_", filename)
 
 
 def rename_files(
     directory: Path,
     extensions: list,
-    mode: str,
     recursive: bool,
     dry_run: bool,
     verbose: bool,
@@ -38,24 +32,19 @@ def rename_files(
     pattern = "**/*" if recursive else "*"
     renamed_count = 0
 
-    sanitizer = (
-        sanitize_filename_simple if mode == "simple" else sanitize_filename_advanced
-    )
-
     for ext in extensions:
         for file_path in directory.glob(f"{pattern}.{ext}"):
             if file_path.is_file():
-                new_name = sanitizer(file_path.name)
+                new_name = sanitize_filename(file_path.name)
                 if new_name != file_path.name:
                     new_path = file_path.parent / new_name
-                    # Handle conflicts (advanced mode style)
-                    if mode == "advanced":
-                        counter = 1
-                        while new_path.exists():
-                            stem = new_path.stem
-                            suffix = new_path.suffix
-                            new_path = new_path.parent / f"{stem}_{counter}{suffix}"
-                            counter += 1
+                    # Handle conflicts
+                    counter = 1
+                    while new_path.exists():
+                        stem = new_path.stem
+                        suffix = new_path.suffix
+                        new_path = new_path.parent / f"{stem}_{counter}{suffix}"
+                        counter += 1
 
                     if dry_run:
                         print(f"Would rename: {file_path} -> {new_path}")
@@ -77,26 +66,16 @@ def rename_files(
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Unified script for renaming video files.",
+        description="Script for renaming video files by replacing special characters with underscores.",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
-Modes:
-  simple: Replace spaces with underscores (like old rename.sh).
-  advanced: Replace special characters with underscores (like old special_rename.py).
-
 Examples:
-  python3 rename.py --mode simple /path/to/videos
-  python3 rename.py --mode advanced -r -v /path/to/videos
-  python3 rename.py --mode advanced -n -e mkv mp4 /path/to/videos
+  python3 rename.py /path/to/videos
+  python3 rename.py -r -v /path/to/videos
+  python3 rename.py -n -e mkv mp4 /path/to/videos
         """,
     )
     parser.add_argument("directory", type=Path, help="Directory containing video files")
-    parser.add_argument(
-        "--mode",
-        choices=["simple", "advanced"],
-        default="advanced",
-        help="Renaming mode (default: advanced)",
-    )
     parser.add_argument(
         "-r",
         "--recursive",
@@ -127,7 +106,6 @@ Examples:
     print("#              Rename Tool             #")
     print("########################################")
     print(f"Directory: {args.directory}")
-    print(f"Mode: {args.mode}")
     print(f"Extensions: {', '.join(args.extensions)}")
     print(f"Recursive: {'Yes' if args.recursive else 'No'}")
     print(f"Dry run: {'Yes' if args.dry_run else 'No'}")
@@ -136,7 +114,6 @@ Examples:
     rename_files(
         args.directory,
         args.extensions,
-        args.mode,
         args.recursive,
         args.dry_run,
         args.verbose,

@@ -16,49 +16,45 @@ python3 scripts/video/rename.py [options] /path/to/directory
 ```
 
 **Options:**
-- `--mode simple|advanced`: Renaming mode (default: advanced)
-  - `simple`: Replace spaces with underscores (like old rename.sh)
-  - `advanced`: Replace special characters with underscores (like old special_rename.py)
 - `-r, --recursive`: Process subdirectories recursively
 - `-n, --dry-run`: Preview changes without renaming
 - `-v, --verbose`: Show each rename operation
 - `-e, --extensions`: File extensions to process (default: mkv mp4 description)
 
 **Behavior:**
-- **Simple Mode**: Replaces only spaces with underscores, recursive by default.
-- **Advanced Mode**: Replaces spaces, colons, slashes, quotes, parentheses, brackets, ampersands, pipes, asterisks, question marks, and angle brackets with underscores. Preserves hyphens. Handles filename conflicts.
+- Replaces spaces, colons, slashes, quotes, parentheses, brackets, ampersands, pipes, asterisks, question marks, angle brackets, commas, and hyphens with underscores.
+- Handles filename conflicts by appending a counter (e.g., _1).
 - Supports dry-run and verbose output.
 
 **Examples:**
 ```bash
-# Simple mode (spaces only, recursive)
-$ python3 scripts/video/rename.py --mode simple ~/videos/channel_videos
+# Basic usage (dry-run)
+$ python3 scripts/video/rename.py -n ~/videos/channel_videos
 ########################################
 #              Rename Tool             #
 ########################################
 Directory: /home/user/videos/channel_videos
-Mode: simple
 Extensions: mkv, mp4, description
 Recursive: No
-Dry run: No
-
-Renamed: Video Name.mkv -> Video_Name.mkv
-Renamed 1 files.
-
-# Advanced mode (full specials, dry-run)
-$ python3 scripts/video/rename.py --mode advanced -n -r ~/videos/channel_videos
-########################################
-#              Rename Tool             #
-########################################
-Directory: /home/user/videos/channel_videos
-Mode: advanced
-Extensions: mkv, mp4, description
-Recursive: Yes
 Dry run: Yes
 
 Would rename: Midnite - Value Life Lyrics.mp4 -> Midnite_-_Value_Life_Lyrics.mp4
 Would rename: Akae Beka [test].mkv -> Akae_Beka__test_.mkv
 Dry run complete. Would rename 2 files.
+
+# Recursive with verbose
+$ python3 scripts/video/rename.py -r -v ~/videos/channel_videos
+########################################
+#              Rename Tool             #
+########################################
+Directory: /home/user/videos/channel_videos
+Extensions: mkv, mp4, description
+Recursive: Yes
+Dry run: No
+
+Renamed: Midnite - Value Life Lyrics.mp4 -> Midnite_-_Value_Life_Lyrics.mp4
+Renamed: subdir/Akae Beka [test].mkv -> subdir/Akae_Beka__test_.mkv
+Renamed 2 files.
 ```
 
 **Behavior:**
