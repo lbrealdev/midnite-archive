@@ -23,6 +23,7 @@ python3 scripts/video/rename.py [options] /path/to/directory
 
 **Behavior:**
 - Replaces spaces, colons, slashes, quotes, parentheses, brackets, ampersands, pipes, asterisks, question marks, angle brackets, commas, and hyphens with underscores.
+- Preserves video IDs (the part after the last hyphen before the extension) to avoid renaming YouTube IDs.
 - Handles filename conflicts by appending a counter (e.g., _1).
 - Supports dry-run and verbose output.
 

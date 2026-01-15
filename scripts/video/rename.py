@@ -17,8 +17,24 @@ BAD_CHARS = r'[ /:：⧸\'"()[\]&@#|*?<>,-]'
 
 
 def sanitize_filename(filename: str) -> str:
-    """Replace bad characters with underscores."""
-    return re.sub(BAD_CHARS, "_", filename)
+    """Replace bad characters with underscores, preserving video ID."""
+    if "." not in filename:
+        return re.sub(BAD_CHARS, "_", filename)
+
+    # Split into name and extension
+    name, ext = filename.rsplit(".", 1)
+
+    # Find the last - in name to preserve video ID
+    if "-" in name:
+        last_dash = name.rfind("-")
+        title = name[:last_dash]
+        id_part = name[last_dash:]  # includes the -
+        sanitized_title = re.sub(BAD_CHARS, "_", title)
+        return sanitized_title + id_part + "." + ext
+    else:
+        # No -, rename whole name
+        sanitized_name = re.sub(BAD_CHARS, "_", name)
+        return sanitized_name + "." + ext
 
 
 def rename_files(
