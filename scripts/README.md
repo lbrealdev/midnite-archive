@@ -6,13 +6,59 @@ This directory contains various scripts for managing the midnite-archive reposit
 
 The `video/` subdirectory contains scripts for processing and renaming video files downloaded from YouTube.
 
-### `rename.sh`
+### `rename.py`
 
-Renames `.mkv` and `.description` files in a specified directory (and its subdirectories) by replacing spaces with underscores.
+Unified Python script for renaming video files with simple or advanced modes.
 
 **Usage:**
 ```bash
-./scripts/video/rename.sh /path/to/directory
+python3 scripts/video/rename.py [options] /path/to/directory
+```
+
+**Options:**
+- `--mode simple|advanced`: Renaming mode (default: advanced)
+  - `simple`: Replace spaces with underscores (like old rename.sh)
+  - `advanced`: Replace special characters with underscores (like old special_rename.py)
+- `-r, --recursive`: Process subdirectories recursively
+- `-n, --dry-run`: Preview changes without renaming
+- `-v, --verbose`: Show each rename operation
+- `-e, --extensions`: File extensions to process (default: mkv mp4 description)
+
+**Behavior:**
+- **Simple Mode**: Replaces only spaces with underscores, recursive by default.
+- **Advanced Mode**: Replaces spaces, colons, slashes, quotes, parentheses, brackets, ampersands, pipes, asterisks, question marks, and angle brackets with underscores. Preserves hyphens. Handles filename conflicts.
+- Supports dry-run and verbose output.
+
+**Examples:**
+```bash
+# Simple mode (spaces only, recursive)
+$ python3 scripts/video/rename.py --mode simple ~/videos/channel_videos
+########################################
+#              Rename Tool             #
+########################################
+Directory: /home/user/videos/channel_videos
+Mode: simple
+Extensions: mkv, mp4, description
+Recursive: No
+Dry run: No
+
+Renamed: Video Name.mkv -> Video_Name.mkv
+Renamed 1 files.
+
+# Advanced mode (full specials, dry-run)
+$ python3 scripts/video/rename.py --mode advanced -n -r ~/videos/channel_videos
+########################################
+#              Rename Tool             #
+########################################
+Directory: /home/user/videos/channel_videos
+Mode: advanced
+Extensions: mkv, mp4, description
+Recursive: Yes
+Dry run: Yes
+
+Would rename: Midnite - Value Life Lyrics.mp4 -> Midnite_-_Value_Life_Lyrics.mp4
+Would rename: Akae Beka [test].mkv -> Akae_Beka__test_.mkv
+Dry run complete. Would rename 2 files.
 ```
 
 **Behavior:**
@@ -56,6 +102,44 @@ $ ./scripts/video/special_rename.sh ~/videos/channel_videos
 $ ls *.mkv
 Video_Name_With_Spaces.mkv  ->  Video_Name_With_Spaces.mkv (already renamed)
 Another:Video/Name.mkv      ->  Another_Video_Name.mkv
+```
+
+### `special_rename.py`
+
+Improved Python version for renaming video files (.mkv and .mp4 by default) by replacing special characters with underscores.
+
+**Usage:**
+```bash
+python3 scripts/video/special_rename.py [options] /path/to/directory
+```
+
+**Options:**
+- `-r, --recursive`: Process subdirectories recursively
+- `-n, --dry-run`: Preview changes without renaming
+- `-v, --verbose`: Show each rename operation
+- `-e, --extensions`: Specify file extensions (default: mkv mp4)
+
+**Behavior:**
+- Replaces spaces, colons, slashes, quotes, parentheses, brackets, ampersands, pipes, asterisks, question marks, and angle brackets with underscores.
+- Preserves hyphens for readability.
+- Handles filename conflicts by appending a counter (e.g., _1).
+- Supports recursive processing and dry-run mode.
+
+**Example:**
+```bash
+$ python3 scripts/video/special_rename.py -n -v ~/videos/channel_videos
+
+########################################
+#            Special Rename            #
+########################################
+Directory: /home/user/videos/channel_videos
+Extensions: mkv, mp4
+Recursive: No
+Dry run: Yes
+
+Would rename: Midnite - Value Life Lyrics.mp4 -> Midnite_-_Value_Life_Lyrics.mp4
+Would rename: Akae Beka [test].mkv -> Akae_Beka__test_.mkv
+Dry run complete. Would rename 2 files.
 ```
 
 ## Notes
