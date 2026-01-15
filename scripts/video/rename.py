@@ -13,7 +13,7 @@ import sys
 from pathlib import Path
 
 # Characters to replace
-BAD_CHARS = r'[ /:：⧸\'"()[\]&|*?<>,-]'
+BAD_CHARS = r'[ /:：⧸\'"()[\]&@#|*?<>,-]'
 
 
 def sanitize_filename(filename: str) -> str:
