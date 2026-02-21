@@ -145,3 +145,8 @@ docs_**
 
 # IDEs and editors
 .idea/
+
+
+# Added by cargo
+
+/target

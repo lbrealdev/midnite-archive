@@ -1,0 +1,9 @@
+[package]
+name = "midnite-archive"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+anyhow = "1.0.102"
+clap = "4.5.60"
+regex = "1.12.3"
