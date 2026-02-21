@@ -1,10 +1,10 @@
-@pc:
-    pre-commit install
+@say:
+    echo "Keep good relations, mongst InI"
 
-[working-directory: 'scripts']
-@run *arg:
-    ./channel_list_gen.sh {{ arg }}
+# Run clippy linter
+@lint:
+    cargo clippy
 
-[working-directory: 'scripts/video']
-@rename *arg:
-    ./special_rename.sh {{ arg }}
+# Format the code
+@fmt:
+    cargo fmt
