@@ -8,3 +8,7 @@
 # Format the code
 @fmt:
     cargo fmt
+
+# Clean build artifacts
+@clean:
+    cargo clean
