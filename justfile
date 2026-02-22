@@ -1,3 +1,4 @@
+# Greeting message
 @say:
     echo "Keep good relations, mongst InI"
 
@@ -29,8 +30,21 @@
 @test:
     cargo test
 
-@tools:
+# CI security audit (zizmor + pinact verify)
+[working-directory('.github')]
+@ci-scan:
+    zizmor dependabot.yml ./workflows/*.yml --no-exit-codes
+    pinact run --verify ./workflows/*.yml
+
+# Pin GitHub Actions to immutable SHAs
+[working-directory('.github')]
+@ci-pin:
+    pinact run ./workflows/*.yml
+
+# List mise tools installed in current directory
+@mise-tools:
     mise ls --json | jq -r --arg pwd "$(pwd)" 'to_entries[] | select(.value[].source.path != null and (.value[].source.path | contains($pwd))) | .key'
 
-@list-workflows:
+# List GitHub Actions workflows
+@workflows:
     gh workflow list --json name --jq "to_entries[] | .value.name"
