@@ -28,3 +28,9 @@
 # Run tests
 @test:
     cargo test
+
+@tools:
+    mise ls --json | jq -r --arg pwd "$(pwd)" 'to_entries[] | select(.value[].source.path != null and (.value[].source.path | contains($pwd))) | .key'
+
+@list-workflows:
+    gh workflow list --json name --jq "to_entries[] | .value.name"
