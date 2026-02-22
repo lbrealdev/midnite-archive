@@ -12,3 +12,19 @@
 # Clean build artifacts
 @clean:
     cargo clean
+
+# Build debug binary
+@build:
+    cargo build
+
+# Build release binary (optimized)
+@release:
+    cargo build --release
+
+# Check compilation without building
+@check:
+    cargo check
+
+# Run tests
+@test:
+    cargo test
