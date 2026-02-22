@@ -1,66 +1,39 @@
-# Scripts Directory
+# Scripts (Legacy)
 
-This directory contains various scripts for managing the midnite-archive repository, primarily focused on YouTube video archiving and processing.
+Original bash and Python scripts that preceded the Rust CLI.
 
-## Video Scripts (`video/` subdirectory)
+> **Note:** These scripts are preserved for reference. Use `midnite-archive` CLI instead.
 
-The `video/` subdirectory contains scripts for processing and renaming video files downloaded from YouTube.
+## Available Scripts
 
-### `rename.py`
+| Script                          | Description                                 | Replaced by        |
+|---------------------------------|---------------------------------------------|--------------------|
+| `yt/channel_list_generate.sh`   | Generate video lists from YouTube channels  | `midnite generate` |
+| `yt/download_video.sh`          | Download videos from list or URL            | `midnite download` |
+| `yt/download_video_comments.sh` | Download comments from video list           | `midnite comments` |
+| `video/rename.py`               | Rename video files (sanitize special chars) | `midnite rename`   |
 
-Unified Python script for renaming video files with simple or advanced modes.
+## Legacy Usage
 
-**Usage:**
 ```bash
-python3 scripts/video/rename.py [options] /path/to/directory
+# Generate channel list
+./scripts/yt/channel_list_generate.sh <youtube-channel>
+
+# Download videos
+./scripts/yt/download_video.sh <generated-list>
+
+# Download comments
+./scripts/yt/download_video_comments.sh <generated-list>
+
+# Rename videos
+python3 scripts/video/rename.py [options] <directory>
 ```
 
-**Options:**
-- `-r, --recursive`: Process subdirectories recursively
-- `-n, --dry-run`: Preview changes without renaming
-- `-v, --verbose`: Show each rename operation
-- `-e, --extensions`: File extensions to process (default: mkv mp4 description)
+### rename.py Options
 
-**Behavior:**
-- Replaces spaces, colons, slashes, quotes, parentheses, brackets, ampersands, pipes, asterisks, question marks, angle brackets, commas, and hyphens with underscores.
-- Preserves video IDs (the part after the last hyphen before the extension) to avoid renaming YouTube IDs.
-- Handles filename conflicts by appending a counter (e.g., _1).
-- Supports dry-run and verbose output.
-
-**Examples:**
-```bash
-# Basic usage (dry-run)
-$ python3 scripts/video/rename.py -n ~/videos/channel_videos
-########################################
-#              Rename Tool             #
-########################################
-Directory: /home/user/videos/channel_videos
-Extensions: mkv, mp4, description
-Recursive: No
-Dry run: Yes
-
-Would rename: Midnite - Value Life Lyrics.mp4 -> Midnite_-_Value_Life_Lyrics.mp4
-Would rename: Akae Beka [test].mkv -> Akae_Beka__test_.mkv
-Dry run complete. Would rename 2 files.
-
-# Recursive with verbose
-$ python3 scripts/video/rename.py -r -v ~/videos/channel_videos
-########################################
-#              Rename Tool             #
-########################################
-Directory: /home/user/videos/channel_videos
-Extensions: mkv, mp4, description
-Recursive: Yes
-Dry run: No
-
-Renamed: Midnite - Value Life Lyrics.mp4 -> Midnite_-_Value_Life_Lyrics.mp4
-Renamed: subdir/Akae Beka [test].mkv -> subdir/Akae_Beka__test_.mkv
-Renamed 2 files.
-```
-
-## Notes
-
-- The script uses Python for robust handling of special characters and file operations.
-- Ensure the directory exists and is writable before running.
-- Designed for post-download cleanup of YouTube video files.</content>
-<parameter name="filePath">/home/lbgc/Documents/dev/repos/midnite-archive/scripts/README.md
+| Option             | Description                                               |
+|--------------------|-----------------------------------------------------------|
+| `-r, --recursive`  | Process subdirectories recursively                        |
+| `-n, --dry-run`    | Preview changes without renaming                          |
+| `-v, --verbose`    | Show each rename operation                                |
+| `-e, --extensions` | File extensions to process (default: mkv mp4 description) |
