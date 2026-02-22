@@ -84,6 +84,7 @@ fn collect_renames(directory: &Path, extensions: &[String], recursive: bool) -> 
     for ext in extensions {
         let entries: Vec<_> = if recursive {
             walkdir::WalkDir::new(directory)
+                .follow_links(false)
                 .into_iter()
                 .filter_map(|e| e.ok())
                 .filter(|e| {

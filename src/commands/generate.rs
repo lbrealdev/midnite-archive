@@ -1,9 +1,12 @@
 use crate::yt_dlp;
-use anyhow::{Context, Result};
+use anyhow::{bail, Context, Result};
+use chrono::Local;
 use regex::Regex;
 use std::fs::{self, File};
 use std::io::{BufRead, BufReader, Write};
 use std::path::Path;
+
+const VALID_CHANNEL_PATTERN: &str = "^[a-zA-Z0-9_-]+$";
 
 pub fn execute(channel: &str) -> Result<()> {
     println!("########################################");
@@ -12,6 +15,14 @@ pub fn execute(channel: &str) -> Result<()> {
     println!("########################################");
 
     let channel_name = parse_channel_name(channel);
+
+    if !is_valid_channel_name(&channel_name) {
+        bail!(
+            "Invalid channel name '{}': must contain only alphanumeric characters, underscores, or hyphens",
+            channel_name
+        );
+    }
+
     let timestamp = get_timestamp();
     let list_dir = Path::new(&channel_name).join("lists");
 
@@ -67,12 +78,13 @@ fn parse_channel_name(input: &str) -> String {
     }
 }
 
+fn is_valid_channel_name(name: &str) -> bool {
+    let re = Regex::new(VALID_CHANNEL_PATTERN).unwrap();
+    re.is_match(name)
+}
+
 fn get_timestamp() -> String {
-    let output = std::process::Command::new("date")
-        .arg("+%Y%m%d%H%M%S")
-        .output()
-        .expect("Failed to execute date command");
-    String::from_utf8_lossy(&output.stdout).trim().to_string()
+    Local::now().format("%Y%m%d%H%M%S").to_string()
 }
 
 fn generate_url_file(title_file: &Path, url_file: &Path) -> Result<()> {
