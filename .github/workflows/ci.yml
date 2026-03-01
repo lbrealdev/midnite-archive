@@ -26,18 +26,13 @@ jobs:
         with:
           persist-credentials: false
 
-#      - name: Setup Rust toolchain
-#        uses: dtolnay/rust-toolchain@1df84f516ca6a772d9d0d8db7ddc4a3952e5c6a4 # v1
-#        with:
-#          components: clippy
-
       - name: Run clippy
-        run: |
-          cargo clippy
+        run: cargo clippy
 
   test:
     name: Test
     runs-on: ubuntu-latest
+    needs: lint
     permissions:
       contents: read
 
@@ -47,15 +42,13 @@ jobs:
         with:
           persist-credentials: false
 
-#      - name: Setup Rust toolchain
-#        uses: dtolnay/rust-toolchain@1df84f516ca6a772d9d0d8db7ddc4a3952e5c6a4 # v1
-#
-#      - name: Run tests
-#        run: cargo test
+      - name: Run tests
+        run: cargo test
 
   build:
     name: Build
     runs-on: ubuntu-latest
+    needs: [lint, test]
     permissions:
       contents: read
 
