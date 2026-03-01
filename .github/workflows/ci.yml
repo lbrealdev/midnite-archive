@@ -30,9 +30,10 @@ jobs:
 #        uses: dtolnay/rust-toolchain@1df84f516ca6a772d9d0d8db7ddc4a3952e5c6a4 # v1
 #        with:
 #          components: clippy
-#
-#      - name: Run clippy
-#        run: cargo clippy --all-targets --all-features -- -D warnings
+
+      - name: Run clippy
+        run: |
+          cargo clippy
 
   test:
     name: Test
