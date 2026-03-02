@@ -55,12 +55,15 @@ jobs:
         id: version
         run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
 
+      - name: Add musl target
+        run: rustup target add x86_64-unknown-linux-musl
+
       - name: Build release binary
-        run: cargo build --release
+        run: cargo build --release --target x86_64-unknown-linux-musl
 
       - name: Prepare release archive
         run: |
-          cd target/release
+          cd target/x86_64-unknown-linux-musl/release
           tar -czf ${CARGO_PKG_NAME}-${VERSION}.tar.gz midnite-archive
           mv ${CARGO_PKG_NAME}-${VERSION}.tar.gz $GITHUB_WORKSPACE/
         env:
