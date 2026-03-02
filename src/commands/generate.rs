@@ -1,5 +1,5 @@
 use crate::yt_dlp;
-use anyhow::{Context, Result, bail};
+use anyhow::{bail, Context, Result};
 use chrono::Local;
 use regex::Regex;
 use std::fs::{self, File};
@@ -9,10 +9,7 @@ use std::path::Path;
 const VALID_CHANNEL_PATTERN: &str = "^[a-zA-Z0-9_-]+$";
 
 pub fn execute(channel: &str) -> Result<()> {
-    println!("########################################");
-    println!("             YouTube Script           ");
-    println!("         Channel List Generator       ");
-    println!("########################################");
+    println!("→ Generating video list for: {}", channel);
 
     let channel_name = parse_channel_name(channel);
 
@@ -50,7 +47,7 @@ pub fn execute(channel: &str) -> Result<()> {
     if !list_dir.exists() {
         fs::create_dir_all(&list_dir)
             .with_context(|| format!("Failed to create directory: {:?}", list_dir))?;
-        println!("The {} directory has been created.", channel_name);
+        println!("✓ Directory created: {}", channel_name);
     }
 
     println!();
@@ -64,7 +61,7 @@ pub fn execute(channel: &str) -> Result<()> {
     generate_url_file(&title_file, &url_file).with_context(|| "Failed to generate URL file")?;
 
     println!();
-    println!("Done!");
+    println!("✓ Done!");
 
     Ok(())
 }

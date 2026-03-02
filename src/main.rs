@@ -1,3 +1,5 @@
+#![warn(clippy::all)]
+
 use anyhow::Result;
 use clap::Parser;
 use midnite_archive::{Cli, Commands};

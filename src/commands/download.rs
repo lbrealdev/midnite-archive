@@ -1,14 +1,11 @@
 use crate::yt_dlp;
-use anyhow::{Context, Result, bail};
+use anyhow::{bail, Context, Result};
 use regex::Regex;
 use std::fs;
 use std::path::{Path, PathBuf};
 
 pub fn execute(input: &str) -> Result<()> {
-    println!("########################################");
-    println!("            YouTube Script            ");
-    println!("            Download Video            ");
-    println!("########################################");
+    println!("→ Starting download: {}", input);
 
     yt_dlp::check_available().context("yt-dlp dependency check failed")?;
     yt_dlp::check_deno_available().context("deno dependency check failed")?;
@@ -27,7 +24,7 @@ pub fn execute(input: &str) -> Result<()> {
     }
 
     println!();
-    println!("Done!");
+    println!("✓ Done!");
 
     Ok(())
 }

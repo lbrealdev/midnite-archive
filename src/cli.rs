@@ -3,7 +3,7 @@ use std::path::PathBuf;
 
 #[derive(Parser)]
 #[command(name = "midnite")]
-#[command(version, about = "YouTube archiving tool for Midnite/Akae Beka content", long_about = None)]
+#[command(version = env!("CARGO_PKG_VERSION"), about = "YouTube archiving tool for Midnite/Akae Beka content", long_about = None)]
 pub struct Cli {
     #[command(subcommand)]
     pub command: Commands,
@@ -11,9 +11,9 @@ pub struct Cli {
 
 #[derive(Subcommand)]
 pub enum Commands {
-    /// Generate video list from a YouTube channel
+    /// Generate video list from a YouTube channel (name or URL)
     Generate {
-        /// YouTube channel (e.g., @severo12 or severo12)
+        /// YouTube channel (e.g., @severo12, severo12, or channel URL)
         channel: String,
     },
     /// Download videos from a list file or URL
