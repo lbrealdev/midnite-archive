@@ -3,7 +3,7 @@ use std::path::PathBuf;
 
 #[derive(Parser)]
 #[command(name = "midnite")]
-#[command(about = "YouTube archiving tool for Midnite/Akae Beka content", long_about = None)]
+#[command(version, about = "YouTube archiving tool for Midnite/Akae Beka content", long_about = None)]
 pub struct Cli {
     #[command(subcommand)]
     pub command: Commands,
