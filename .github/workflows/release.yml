@@ -1,0 +1,114 @@
+name: Release
+run-name: release
+
+on:
+  release:
+    types:
+      - created
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  metadata:
+    name: Gather project metadata
+    runs-on: ubuntu-latest
+    outputs:
+      cargo-pkg-name: ${{ steps.cargo-metadata.outputs.CARGO_PKG_NAME }}
+      cargo-pkg-version: ${{ steps.cargo-metadata.outputs.CARGO_PKG_VERSION }}
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Gather project metadata
+        id: cargo-metadata
+        run: |
+          PROJECT_NAME=$(cargo metadata --format-version=1 --no-deps | jq -r '.packages[].name')
+          PROJECT_VERSION=$(cargo metadata --format-version=1 --no-deps | jq -r '.packages[].version')
+          
+          echo "Project name: $PROJECT_NAME"
+          echo "Project version: $PROJECT_VERSION"
+          
+          echo "CARGO_PKG_NAME=$PROJECT_NAME" >> $GITHUB_OUTPUT
+          echo "CARGO_PKG_VERSION=$PROJECT_VERSION" >> $GITHUB_OUTPUT
+
+  build:
+    name: Build
+    needs: metadata
+    runs-on: ubuntu-latest
+    env:
+      CARGO_PKG_NAME: ${{ needs.metadata.outputs.cargo-pkg-name }}
+      CARGO_PKG_VERSION: ${{ needs.metadata.outputs.cargo-pkg-version }}
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Build release binary
+        run: cargo build --release
+
+      - name: Prepare release archive
+        run: |
+          cd target/release
+          tar -czf ${CARGO_PKG_NAME}-${CARGO_PKG_VERSION}.tar.gz midnite-archive
+          mv ${CARGO_PKG_NAME}-${CARGO_PKG_VERSION}.tar.gz $GITHUB_WORKSPACE/
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: ${{ env.CARGO_PKG_NAME }}-${{ env.CARGO_PKG_VERSION }}
+          path: ${{ env.CARGO_PKG_NAME }}-${{ env.CARGO_PKG_VERSION }}.tar.gz
+          retention-days: 1
+          if-no-files-found: error
+
+  release:
+    name: Create Release
+    needs: [metadata, build]
+    runs-on: ubuntu-latest
+    env:
+      CARGO_PKG_NAME: ${{ needs.metadata.outputs.cargo-pkg-name }}
+      CARGO_PKG_VERSION: ${{ needs.metadata.outputs.cargo-pkg-version }}
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      - name: Download Artifact
+        uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5.0.0
+        with:
+          name: ${{ env.CARGO_PKG_NAME }}-${{ env.CARGO_PKG_VERSION }}
+          path: ./artifacts
+
+      - name: Generate changelog
+        id: changelog
+        run: |
+          PREV_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+          if [ -n "$PREV_TAG" ]; then
+            echo "changelog<<EOF" >> $GITHUB_OUTPUT
+            git log --pretty=format:"- %s" $PREV_TAG..HEAD >> $GITHUB_OUTPUT
+            echo "" >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
+          else
+            echo "changelog=Initial release" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@a06a81a03ee405af7f2048a818ed3f03bbf83c7b # v2.5.0
+        with:
+          body: ${{ steps.changelog.outputs.changelog }}
+          files: artifacts/*.tar.gz
+          generate_release_notes: false
