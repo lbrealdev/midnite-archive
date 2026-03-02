@@ -1,3 +1,7 @@
+# Alias
+
+alias t := mise-tools
+
 # Greeting message
 @say:
     echo "Keep good relations, mongst InI"

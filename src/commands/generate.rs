@@ -1,5 +1,5 @@
 use crate::yt_dlp;
-use anyhow::{bail, Context, Result};
+use anyhow::{Context, Result, bail};
 use chrono::Local;
 use regex::Regex;
 use std::fs::{self, File};

@@ -3,8 +3,9 @@
 use anyhow::Result;
 use clap::Parser;
 use midnite_archive::{Cli, Commands};
+use std::process;
 
-fn main() -> Result<()> {
+fn run() -> Result<()> {
     let cli = Cli::parse();
 
     match cli.command {
@@ -35,4 +36,11 @@ fn main() -> Result<()> {
     }
 
     Ok(())
+}
+
+fn main() {
+    if let Err(e) = run() {
+        eprintln!("Error: {}", e);
+        process::exit(1);
+    }
 }

@@ -1,5 +1,5 @@
-use anyhow::{bail, Context, Result};
-use comfy_table::{presets::UTF8_FULL, Table};
+use anyhow::{Context, Result, bail};
+use comfy_table::{Table, presets::UTF8_FULL};
 use regex::Regex;
 use std::fs;
 use std::path::Path;
