@@ -1,9 +1,18 @@
+mod comments;
+mod download;
+mod generate;
+mod rename;
+
+pub use comments::execute as comments;
+pub use download::execute as download;
+pub use generate::execute as generate;
+pub use rename::execute as rename;
+
 use clap::{Parser, Subcommand};
 use std::path::PathBuf;
 
 #[derive(Parser)]
-#[command(name = "midnite")]
-#[command(about = "YouTube archiving tool for Midnite/Akae Beka content", long_about = None)]
+#[command(name = env!("CARGO_PKG_NAME"), version = env!("CARGO_PKG_VERSION"), about = ABOUT, long_about = LONG_ABOUT)]
 pub struct Cli {
     #[command(subcommand)]
     pub command: Commands,
@@ -11,9 +20,9 @@ pub struct Cli {
 
 #[derive(Subcommand)]
 pub enum Commands {
-    /// Generate video list from a YouTube channel
+    /// Generate video list from a YouTube channel (name or URL)
     Generate {
-        /// YouTube channel (e.g., @severo12 or severo12)
+        /// YouTube channel (e.g., @severo12, severo12, or channel URL)
         channel: String,
     },
     /// Download videos from a list file or URL
@@ -44,3 +53,6 @@ pub enum Commands {
         extensions: Vec<String>,
     },
 }
+
+const ABOUT: &str = "Midnite Archive CLI";
+const LONG_ABOUT: &str = "YouTube archiving tool for Midnite/Akae Beka content";

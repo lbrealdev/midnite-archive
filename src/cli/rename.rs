@@ -13,15 +13,12 @@ pub fn execute(
     verbose: bool,
     extensions: &[String],
 ) -> Result<()> {
-    println!("########################################");
-    println!("#              Rename Tool             #");
-    println!("########################################");
+    println!("→ Renaming files in: {}", directory.display());
 
     if !directory.is_dir() {
         bail!("Error: {} is not a directory", directory.display());
     }
 
-    println!("Directory: {}", directory.display());
     println!(
         "Extensions: {}",
         extensions
@@ -44,7 +41,7 @@ pub fn execute(
     if dry_run {
         display_rename_table(&renames);
         println!();
-        println!("Dry run complete. Would rename {} files.", renames.len());
+        println!("✓ Dry run complete. Would rename {} files.", renames.len());
     } else {
         let mut success_count = 0;
         for (source_path, new_name) in &renames {
@@ -63,11 +60,11 @@ pub fn execute(
                     success_count += 1;
                 }
                 Err(e) => {
-                    eprintln!("Error renaming {}: {}", source_path.display(), e);
+                    eprintln!("✗ Error renaming {}: {}", source_path.display(), e);
                 }
             }
         }
-        println!("Renamed {} files.", success_count);
+        println!("✓ Renamed {} files.", success_count);
     }
 
     Ok(())

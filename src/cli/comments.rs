@@ -4,12 +4,9 @@ use std::fs;
 use std::path::Path;
 
 pub fn execute(list_file: &Path) -> Result<()> {
-    println!("########################################");
-    println!("            YouTube Script            ");
-    println!("        Download Video Comments       ");
-    println!("########################################");
+    println!("→ Downloading comments from: {}", list_file.display());
 
-    yt_dlp::check_available().context("yt-dlp dependency check failed")?;
+    yt_dlp::check_available()?;
 
     if !list_file.exists() {
         bail!("The file {:?} was not found!", list_file);
@@ -33,12 +30,12 @@ pub fn execute(list_file: &Path) -> Result<()> {
     if !Path::new(&channel_name).exists() {
         fs::create_dir_all(&comments_dir)
             .with_context(|| format!("Failed to create directory: {:?}", comments_dir))?;
-        println!("The {} directory has been created.", channel_name);
+        println!("✓ Directory created: {}", channel_name);
     } else {
         fs::create_dir_all(&comments_dir)
             .with_context(|| format!("Failed to create directory: {:?}", comments_dir))?;
         println!(
-            "{} directory already exists, creating comments directory...",
+            "✓ {} directory already exists, creating comments directory...",
             channel_name
         );
     }
@@ -59,7 +56,7 @@ pub fn execute(list_file: &Path) -> Result<()> {
         .with_context(|| "Comments download failed")?;
 
     println!();
-    println!("Done!");
+    println!("✓ Done!");
 
     Ok(())
 }

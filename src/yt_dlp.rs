@@ -3,29 +3,17 @@ use std::path::Path;
 use std::process::{Command, Stdio};
 
 pub fn check_available() -> Result<()> {
-    let output = Command::new("yt-dlp")
-        .arg("--version")
-        .output()
-        .context("yt-dlp not found. Please install it first.")?;
-
-    if !output.status.success() {
-        bail!("yt-dlp --version failed");
+    match Command::new("yt-dlp").arg("--version").output() {
+        Ok(output) if output.status.success() => Ok(()),
+        _ => bail!("yt-dlp not found. Please install it first."),
     }
-
-    Ok(())
 }
 
 pub fn check_deno_available() -> Result<()> {
-    let output = Command::new("deno")
-        .arg("--version")
-        .output()
-        .context("deno not found. Please install it first.")?;
-
-    if !output.status.success() {
-        bail!("deno --version failed");
+    match Command::new("deno").arg("--version").output() {
+        Ok(output) if output.status.success() => Ok(()),
+        _ => bail!("deno not found. Please install it first."),
     }
-
-    Ok(())
 }
 
 pub fn generate_channel_list(channel: &str, output_file: &Path) -> Result<()> {

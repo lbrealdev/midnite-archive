@@ -9,10 +9,7 @@ use std::path::Path;
 const VALID_CHANNEL_PATTERN: &str = "^[a-zA-Z0-9_-]+$";
 
 pub fn execute(channel: &str) -> Result<()> {
-    println!("########################################");
-    println!("             YouTube Script           ");
-    println!("         Channel List Generator       ");
-    println!("########################################");
+    println!("→ Generating video list for: {}", channel);
 
     let channel_name = parse_channel_name(channel);
 
@@ -50,21 +47,23 @@ pub fn execute(channel: &str) -> Result<()> {
     if !list_dir.exists() {
         fs::create_dir_all(&list_dir)
             .with_context(|| format!("Failed to create directory: {:?}", list_dir))?;
-        println!("The {} directory has been created.", channel_name);
+        println!("✓ Directory created: {}", channel_name);
     }
 
     println!();
     println!("Fetching channel list...");
 
-    yt_dlp::check_available().context("yt-dlp dependency check failed")?;
+    yt_dlp::check_available()?;
 
     yt_dlp::generate_channel_list(&channel_name, &title_file)
         .with_context(|| "Failed to generate channel list")?;
 
     generate_url_file(&title_file, &url_file).with_context(|| "Failed to generate URL file")?;
 
+    println!("Testing...");
+
     println!();
-    println!("Done!");
+    println!("✓ Done!");
 
     Ok(())
 }
