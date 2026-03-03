@@ -7,8 +7,8 @@ use std::path::{Path, PathBuf};
 pub fn execute(input: &str) -> Result<()> {
     println!("→ Starting download: {}", input);
 
-    yt_dlp::check_available().context("yt-dlp dependency check failed")?;
-    yt_dlp::check_deno_available().context("deno dependency check failed")?;
+    yt_dlp::check_available()?;
+    yt_dlp::check_deno_available()?;
 
     let url_pattern = Regex::new(r"^https?://").unwrap();
 
@@ -18,7 +18,7 @@ pub fn execute(input: &str) -> Result<()> {
         handle_file_download(input)?;
     } else {
         bail!(
-            "Error: Input '{}' is neither a valid URL nor an existing file.",
+            "Input '{}' is neither a valid URL nor an existing file.",
             input
         );
     }

@@ -2,7 +2,7 @@
 
 use anyhow::Result;
 use clap::Parser;
-use midnite_archive::{Cli, Commands};
+use midnite_archive::cli::{Cli, Commands};
 use std::process;
 
 fn run() -> Result<()> {
@@ -10,13 +10,13 @@ fn run() -> Result<()> {
 
     match cli.command {
         Commands::Generate { channel } => {
-            midnite_archive::commands::generate(&channel)?;
+            midnite_archive::cli::generate(&channel)?;
         }
         Commands::Download { input } => {
-            midnite_archive::commands::download(&input)?;
+            midnite_archive::cli::download(&input)?;
         }
         Commands::Comments { list_file } => {
-            midnite_archive::commands::comments(&list_file)?;
+            midnite_archive::cli::comments(&list_file)?;
         }
         Commands::Rename {
             directory,
@@ -25,13 +25,7 @@ fn run() -> Result<()> {
             verbose,
             extensions,
         } => {
-            midnite_archive::commands::rename(
-                &directory,
-                recursive,
-                dry_run,
-                verbose,
-                &extensions,
-            )?;
+            midnite_archive::cli::rename(&directory, recursive, dry_run, verbose, &extensions)?;
         }
     }
 

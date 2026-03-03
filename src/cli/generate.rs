@@ -53,12 +53,14 @@ pub fn execute(channel: &str) -> Result<()> {
     println!();
     println!("Fetching channel list...");
 
-    yt_dlp::check_available().context("yt-dlp dependency check failed")?;
+    yt_dlp::check_available()?;
 
     yt_dlp::generate_channel_list(&channel_name, &title_file)
         .with_context(|| "Failed to generate channel list")?;
 
     generate_url_file(&title_file, &url_file).with_context(|| "Failed to generate URL file")?;
+
+    println!("Testing...");
 
     println!();
     println!("✓ Done!");

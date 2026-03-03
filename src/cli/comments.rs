@@ -6,7 +6,7 @@ use std::path::Path;
 pub fn execute(list_file: &Path) -> Result<()> {
     println!("→ Downloading comments from: {}", list_file.display());
 
-    yt_dlp::check_available().context("yt-dlp dependency check failed")?;
+    yt_dlp::check_available()?;
 
     if !list_file.exists() {
         bail!("The file {:?} was not found!", list_file);
