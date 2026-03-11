@@ -14,6 +14,10 @@ use std::path::PathBuf;
 #[derive(Parser)]
 #[command(name = env!("CARGO_PKG_NAME"), version = env!("CARGO_PKG_VERSION"), about = ABOUT, long_about = LONG_ABOUT)]
 pub struct Cli {
+    /// Increase verbosity level (can be used multiple times, e.g., -v, -vv, -vvv)
+    #[arg(short, long, action = clap::ArgAction::Count, global = true)]
+    pub verbose: u8,
+
     #[command(subcommand)]
     pub command: Commands,
 }

@@ -1,10 +1,11 @@
+use crate::types::ListFile;
 use crate::yt_dlp;
 use anyhow::{Context, Result, bail};
 use std::fs;
 use std::path::Path;
 
 pub fn execute(list_file: &Path) -> Result<()> {
-    println!("→ Downloading comments from: {}", list_file.display());
+    tracing::info!("Downloading comments from: {}", list_file.display());
 
     yt_dlp::check_available()?;
 
@@ -12,59 +13,65 @@ pub fn execute(list_file: &Path) -> Result<()> {
         bail!("The file {:?} was not found!", list_file);
     }
 
-    let list_file_full_path = fs::canonicalize(list_file)
-        .with_context(|| format!("Failed to resolve path: {:?}", list_file))?;
+    // Use strongly-typed ListFile
+    let list_file = ListFile::from_path(list_file)
+        .with_context(|| format!("Failed to process list file: {:?}", list_file))?;
 
-    println!();
-    println!(
-        "YouTube channel list path: {}",
-        list_file_full_path.display()
-    );
+    tracing::info!("YouTube channel list path: {}", list_file.path.display());
+    tracing::info!("Detected channel: @{}", list_file.channel.name);
 
-    let channel_name = extract_channel_name(&list_file_full_path);
-    let comments_dir = Path::new(&channel_name).join("comments");
+    let comments_dir = list_file.channel.comments_dir();
 
-    println!();
-    println!("Checking if {} directory exists...", channel_name);
+    tracing::debug!("Checking if {} directory exists...", list_file.channel.name);
 
-    if !Path::new(&channel_name).exists() {
+    if !list_file.channel.base_dir().exists() {
         fs::create_dir_all(&comments_dir)
             .with_context(|| format!("Failed to create directory: {:?}", comments_dir))?;
-        println!("✓ Directory created: {}", channel_name);
+        tracing::info!("Directory created: {}", list_file.channel.name);
     } else {
         fs::create_dir_all(&comments_dir)
             .with_context(|| format!("Failed to create directory: {:?}", comments_dir))?;
-        println!(
-            "✓ {} directory already exists, creating comments directory...",
-            channel_name
+        tracing::info!(
+            "{} directory already exists, creating comments directory...",
+            list_file.channel.name
         );
     }
 
-    let file_stem = list_file_full_path
+    let file_stem = list_file
+        .path
         .file_name()
         .and_then(|n| n.to_str())
         .unwrap_or("unknown");
 
-    println!();
-    println!("Downloading from {} list...", file_stem);
-    println!();
+    tracing::info!("Downloading from {} list...", file_stem);
 
-    let output_dir_full_path = fs::canonicalize(Path::new(&channel_name).join("comments"))
+    // Optionally read videos for better tracking
+    match list_file.read_videos() {
+        Ok(videos) => {
+            tracing::info!("Found {} videos to process comments for", videos.len());
+            for video in &videos[..5.min(videos.len())] {
+                tracing::info!("  - {}", video);
+            }
+            if videos.len() > 5 {
+                tracing::info!("  ... and {} more", videos.len() - 5);
+            }
+        }
+        Err(e) => {
+            tracing::warn!("Could not parse video list: {}", e);
+        }
+    }
+
+    let output_dir_full_path = fs::canonicalize(&comments_dir)
         .with_context(|| "Failed to resolve output directory path")?;
 
-    yt_dlp::download_comments(&list_file_full_path, &output_dir_full_path)
+    tracing::info!("Starting comments download...");
+    yt_dlp::download_comments(&list_file.path, &output_dir_full_path)
         .with_context(|| "Comments download failed")?;
 
-    println!();
+    tracing::info!("Comments download completed successfully");
+
+    // Keep final output visible
     println!("✓ Done!");
 
     Ok(())
-}
-
-fn extract_channel_name(path: &Path) -> String {
-    path.file_name()
-        .and_then(|n| n.to_str())
-        .and_then(|name| name.split('-').next())
-        .unwrap_or("unknown")
-        .to_string()
 }
