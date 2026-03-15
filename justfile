@@ -1,3 +1,7 @@
+# Alias
+
+alias t := mise-tools
+
 # Greeting message
 @say:
     echo "Keep good relations, mongst InI"
@@ -48,3 +52,13 @@
 # List GitHub Actions workflows
 @workflows:
     gh workflow list --json name --jq "to_entries[] | .value.name"
+
+# Create new tag
+tag:
+    #!/usr/bin/env bash
+    set -euo pipefail
+
+    PKG_VERSION="v$(cargo metadata --format-version=1 --no-deps | jq -r '.packages[].version')"
+
+    git tag "$PKG_VERSION"
+    git push origin "$PKG_VERSION"

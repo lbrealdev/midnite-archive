@@ -13,16 +13,13 @@ pub fn execute(
     verbose: bool,
     extensions: &[String],
 ) -> Result<()> {
-    println!("########################################");
-    println!("#              Rename Tool             #");
-    println!("########################################");
+    tracing::info!("Renaming files in: {}", directory.display());
 
     if !directory.is_dir() {
         bail!("Error: {} is not a directory", directory.display());
     }
 
-    println!("Directory: {}", directory.display());
-    println!(
+    tracing::info!(
         "Extensions: {}",
         extensions
             .iter()
@@ -30,21 +27,19 @@ pub fn execute(
             .collect::<Vec<_>>()
             .join(", ")
     );
-    println!("Recursive: {}", if recursive { "Yes" } else { "No" });
-    println!("Dry run: {}", if dry_run { "Yes" } else { "No" });
-    println!();
+    tracing::info!("Recursive: {}", if recursive { "Yes" } else { "No" });
+    tracing::info!("Dry run: {}", if dry_run { "Yes" } else { "No" });
 
     let renames = collect_renames(directory, extensions, recursive)?;
 
     if renames.is_empty() {
-        println!("No files to rename.");
+        tracing::info!("No files to rename.");
         return Ok(());
     }
 
     if dry_run {
         display_rename_table(&renames);
-        println!();
-        println!("Dry run complete. Would rename {} files.", renames.len());
+        tracing::info!("Dry run complete. Would rename {} files.", renames.len());
     } else {
         let mut success_count = 0;
         for (source_path, new_name) in &renames {
@@ -54,7 +49,7 @@ pub fn execute(
             match fs::rename(source_path, &final_path) {
                 Ok(()) => {
                     if verbose {
-                        println!(
+                        tracing::info!(
                             "Renamed: {} -> {}",
                             source_path.display(),
                             final_path.display()
@@ -63,11 +58,11 @@ pub fn execute(
                     success_count += 1;
                 }
                 Err(e) => {
-                    eprintln!("Error renaming {}: {}", source_path.display(), e);
+                    tracing::error!("Error renaming {}: {}", source_path.display(), e);
                 }
             }
         }
-        println!("Renamed {} files.", success_count);
+        tracing::info!("Renamed {} files.", success_count);
     }
 
     Ok(())
@@ -133,7 +128,7 @@ fn display_rename_table(renames: &RenameList) {
         table.add_row(vec![&source_name, new_name]);
     }
 
-    println!("{table}");
+    tracing::info!("\n{table}");
 }
 
 fn sanitize_filename(path: &Path, re: &Regex, underscore_re: &Regex) -> String {
