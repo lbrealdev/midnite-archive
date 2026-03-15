@@ -130,6 +130,7 @@ dmypy.json
 
 test.sh
 test.txt
+test_channel
 
 # YouTube files
 *.mkv
