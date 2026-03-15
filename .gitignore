@@ -147,6 +147,10 @@ docs_**
 # IDEs and editors
 .idea/
 
+# OpenCode / Agent tooling
+.agents/
+.opencode/
+
 
 # Added by cargo
 
