@@ -278,7 +278,7 @@ impl ListFile {
                 videos.push(video);
             }
             // Try extracting ID from end of line
-            if let Some(caps) = id_regex.captures(line)
+            else if let Some(caps) = id_regex.captures(line)
                 && let Ok(id) = VideoId::from_str(&caps[0])
             {
                 let title = line[..line.len() - 12].to_string();
