@@ -72,25 +72,89 @@ fn handle_file_download(input: &str) -> Result<()> {
 
     tracing::info!("Downloading from {} list...", file_stem);
 
-    // Optionally read videos for logging/validation
-    match list_file.read_videos() {
+    // Read videos and count totals for tracking stats
+    let total_videos = match list_file.read_videos() {
         Ok(videos) => {
-            tracing::info!("Found {} videos in list", videos.len());
+            let count = videos.len();
+            tracing::info!("Found {} videos in list", count);
             for video in &videos[..5.min(videos.len())] {
                 tracing::info!("  - {}", video);
             }
             if videos.len() > 5 {
                 tracing::info!("  ... and {} more", videos.len() - 5);
             }
+            count
         }
         Err(e) => {
             tracing::warn!("Could not parse video list: {}", e);
+            0
+        }
+    };
+
+    // Check archive file for download tracking stats
+    let archive_file = download_dir
+        .join(".archive")
+        .join(
+            list_file
+                .path
+                .file_stem()
+                .unwrap_or(std::ffi::OsStr::new("archive")),
+        )
+        .with_extension("archive");
+
+    let downloaded_count = if archive_file.exists() {
+        match std::fs::read_to_string(&archive_file) {
+            Ok(content) => content.lines().filter(|line| !line.is_empty()).count(),
+            Err(_) => 0,
+        }
+    } else {
+        0
+    };
+
+    let remaining = total_videos.saturating_sub(downloaded_count);
+
+    // Display tracking statistics
+    if total_videos > 0 {
+        println!("📊 Download Statistics:");
+        println!("   Total videos: {}", total_videos);
+        println!("   Already downloaded: {}", downloaded_count);
+        println!("   Remaining to download: {}", remaining);
+        if remaining > 0 {
+            println!();
         }
     }
 
     tracing::info!("Starting download...");
-    yt_dlp::download_from_file(&list_file.path, &download_dir)
-        .with_context(|| "Download failed")?;
+    yt_dlp::download_from_file(
+        &list_file.path,
+        &download_dir,
+        total_videos,
+        downloaded_count,
+    )
+    .with_context(|| "Download failed")?;
+
+    // Check archive again after download
+    let new_downloaded_count = if archive_file.exists() {
+        match std::fs::read_to_string(&archive_file) {
+            Ok(content) => content.lines().filter(|line| !line.is_empty()).count(),
+            Err(_) => downloaded_count,
+        }
+    } else {
+        downloaded_count
+    };
+
+    let newly_downloaded = new_downloaded_count.saturating_sub(downloaded_count);
+
+    if total_videos > 0 && newly_downloaded > 0 {
+        println!(
+            "✓ Downloaded {} new video(s) this session",
+            newly_downloaded
+        );
+        println!(
+            "   Progress: {}/{} videos complete",
+            new_downloaded_count, total_videos
+        );
+    }
 
     Ok(())
 }

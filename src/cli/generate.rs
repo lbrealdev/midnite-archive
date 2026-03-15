@@ -6,8 +6,12 @@ use std::fs::{self, File};
 use std::io::Write;
 use std::path::PathBuf;
 
-pub fn execute(channel_input: &str) -> Result<()> {
+pub fn execute(channel_input: &str, filter: Option<&str>) -> Result<()> {
     tracing::info!("Generating video list for: {}", channel_input);
+
+    if let Some(f) = filter {
+        tracing::info!("Applying filter: {}", f);
+    }
 
     // Parse and validate channel name using strongly-typed type
     let channel_name = ChannelName::parse(channel_input)?;
@@ -31,6 +35,7 @@ pub fn execute(channel_input: &str) -> Result<()> {
     tracing::debug!("URL file: {}", url_file.display());
 
     tracing::debug!("Checking if {} directory exists...", channel.name);
+
     if !list_dir.exists() {
         fs::create_dir_all(&list_dir)
             .with_context(|| format!("Failed to create directory: {:?}", list_dir))?;
@@ -44,7 +49,7 @@ pub fn execute(channel_input: &str) -> Result<()> {
     yt_dlp::check_available()?;
 
     // Generate list and get back structured video data
-    let videos = yt_dlp::generate_channel_list(&channel, &title_file)
+    let videos = yt_dlp::generate_channel_list(&channel, &title_file, filter)
         .with_context(|| "Failed to generate channel list")?;
 
     tracing::info!("Fetched {} videos from channel", videos.len());
@@ -52,13 +57,16 @@ pub fn execute(channel_input: &str) -> Result<()> {
     // Write URL file using strongly-typed Video data
     generate_url_file(&videos, &url_file).with_context(|| "Failed to generate URL file")?;
 
-    tracing::info!("Generated {} video entries", videos.len());
     tracing::info!("Done!");
 
     // Keep final output visible
-    println!("✓ Generated {} video entries", videos.len());
-    println!("  Title file: {}", title_file.display());
-    println!("  URL file: {}", url_file.display());
+    if let Some(f) = filter {
+        println!("✓ Filter '{}' applied - {} videos", f, videos.len());
+    } else {
+        println!("✓ {} videos", videos.len());
+    }
+    println!("  Title: {}", title_file.display());
+    println!("  URLs: {}", url_file.display());
 
     Ok(())
 }

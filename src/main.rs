@@ -8,8 +8,9 @@ use tracing_subscriber::EnvFilter;
 
 fn setup_logging(verbose: u8) {
     let level = match verbose {
-        0 => "info",
-        1 => "debug",
+        0 => "off",
+        1 => "info",
+        2 => "debug",
         _ => "trace",
     };
 
@@ -29,9 +30,9 @@ fn run() -> Result<()> {
     tracing::info!("Starting midnite-archive");
 
     match cli.command {
-        Commands::Generate { channel } => {
+        Commands::Generate { channel, filter } => {
             tracing::debug!("Executing generate command for channel: {}", channel);
-            midnite_archive::cli::generate(&channel)?;
+            midnite_archive::cli::generate(&channel, filter.as_deref())?;
         }
         Commands::Download { input } => {
             tracing::debug!("Executing download command with input: {}", input);

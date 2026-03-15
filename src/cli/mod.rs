@@ -28,6 +28,9 @@ pub enum Commands {
     Generate {
         /// YouTube channel (e.g., @severo12, severo12, or channel URL)
         channel: String,
+        /// Filter videos by title pattern (e.g., --filter "live" or --filter "title*=live")
+        #[arg(short, long)]
+        filter: Option<String>,
     },
     /// Download videos from a list file or URL
     Download {
