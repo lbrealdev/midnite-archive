@@ -1,5 +1,5 @@
-use anyhow::{bail, Context, Result};
-use comfy_table::{presets::UTF8_FULL, Table};
+use anyhow::{Context, Result, bail};
+use comfy_table::{Table, presets::UTF8_FULL};
 use regex::Regex;
 use std::fs;
 use std::path::Path;
@@ -214,7 +214,7 @@ mod tests {
         );
 
         // Verify no new file was created
-        let renamed = dir.path().join("video_ test.mkv");
+        let renamed = dir.path().join("video_test.mkv");
         assert!(
             !renamed.exists(),
             "Renamed file should NOT exist in dry-run mode"
@@ -235,7 +235,7 @@ mod tests {
         assert!(!file_path.exists(), "Original file should be renamed");
 
         // Verify new file exists
-        let renamed = dir.path().join("video_ test.mkv");
+        let renamed = dir.path().join("video_test.mkv");
         assert!(renamed.exists(), "Renamed file should exist");
     }
 }

@@ -1,6 +1,6 @@
 use crate::types::ListFile;
 use crate::yt_dlp;
-use anyhow::{bail, Context, Result};
+use anyhow::{Context, Result, bail};
 use std::fs;
 use std::path::Path;
 
@@ -47,7 +47,10 @@ pub fn execute(list_file: &Path) -> Result<()> {
 
     // Optionally read videos for better tracking
     match list_file.read_videos() {
-        Ok(videos) => {
+        Ok((videos, unparseable)) => {
+            if !unparseable.is_empty() {
+                tracing::warn!("Skipped {} unparseable lines", unparseable.len());
+            }
             tracing::info!("Found {} videos to process comments for", videos.len());
             for video in &videos[..5.min(videos.len())] {
                 tracing::info!("  - {}", video);

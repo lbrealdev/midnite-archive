@@ -1,6 +1,6 @@
 use crate::types::ListFile;
 use crate::yt_dlp;
-use anyhow::{bail, Context, Result};
+use anyhow::{Context, Result, bail};
 use std::fs;
 use std::path::Path;
 
@@ -74,8 +74,11 @@ fn handle_file_download(input: &str) -> Result<()> {
 
     // Read videos and count totals for tracking stats
     let total_videos = match list_file.read_videos() {
-        Ok(videos) => {
+        Ok((videos, unparseable)) => {
             let count = videos.len();
+            if !unparseable.is_empty() {
+                tracing::warn!("Skipped {} unparseable lines", unparseable.len());
+            }
             tracing::info!("Found {} videos in list", count);
             for video in &videos[..5.min(videos.len())] {
                 tracing::info!("  - {}", video);
