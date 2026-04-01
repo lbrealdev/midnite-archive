@@ -10,7 +10,6 @@ pub fn execute(
     directory: &Path,
     recursive: bool,
     dry_run: bool,
-    verbose: bool,
     extensions: &[String],
 ) -> Result<()> {
     tracing::info!("Renaming files in: {}", directory.display());
@@ -48,13 +47,11 @@ pub fn execute(
 
             match fs::rename(source_path, &final_path) {
                 Ok(()) => {
-                    if verbose {
-                        tracing::info!(
-                            "Renamed: {} -> {}",
-                            source_path.display(),
-                            final_path.display()
-                        );
-                    }
+                    tracing::info!(
+                        "Renamed: {} -> {}",
+                        source_path.display(),
+                        final_path.display()
+                    );
                     success_count += 1;
                 }
                 Err(e) => {
@@ -191,5 +188,54 @@ impl PathExt for Path {
             .and_then(|n| n.to_str())
             .unwrap_or("")
             .to_string()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::fs::File;
+    use tempfile::tempdir;
+
+    #[test]
+    fn test_dry_run_does_not_modify_files() {
+        // Create temp dir with a file that needs renaming
+        let dir = tempdir().unwrap();
+        let file_path = dir.path().join("video: test.mkv");
+        File::create(&file_path).unwrap();
+
+        // Call execute with dry_run = true
+        execute(dir.path(), false, true, &["mkv".to_string()]).unwrap();
+
+        // Verify original file still exists
+        assert!(
+            file_path.exists(),
+            "Original file should exist in dry-run mode"
+        );
+
+        // Verify no new file was created
+        let renamed = dir.path().join("video_test.mkv");
+        assert!(
+            !renamed.exists(),
+            "Renamed file should NOT exist in dry-run mode"
+        );
+    }
+
+    #[test]
+    fn test_actual_rename_modifies_files() {
+        // Create temp dir with a file that needs renaming
+        let dir = tempdir().unwrap();
+        let file_path = dir.path().join("video: test.mkv");
+        File::create(&file_path).unwrap();
+
+        // Call execute with dry_run = false
+        execute(dir.path(), false, false, &["mkv".to_string()]).unwrap();
+
+        // Verify original file no longer exists
+        assert!(!file_path.exists(), "Original file should be renamed");
+
+        // Verify new file exists
+        let renamed = dir.path().join("video_test.mkv");
+        assert!(renamed.exists(), "Renamed file should exist");
     }
 }

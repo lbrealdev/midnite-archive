@@ -1,8 +1,12 @@
 use anyhow::{Context, Result, bail};
 use regex::Regex;
+use std::collections::HashSet;
 use std::fmt;
 use std::path::{Path, PathBuf};
 use std::str::FromStr;
+
+const VIDEO_ID_PATTERN: &str = r"[A-Za-z0-9_-]{11}";
+const CHANNEL_PATTERN: &str = r"^[a-zA-Z0-9_-]+$";
 
 /// Represents a YouTube video with strongly-typed fields
 #[derive(Debug, Clone, PartialEq)]
@@ -30,6 +34,7 @@ impl Video {
         if let Some(caps) = id_regex.captures(s) {
             let id_str = caps[0].to_string();
             let title = s[..s.len() - id_str.len()]
+                .trim_end()
                 .trim_end_matches('-')
                 .to_string();
 
@@ -153,8 +158,6 @@ impl Channel {
 pub struct ChannelName(String);
 
 impl ChannelName {
-    const VALID_PATTERN: &str = r"^[a-zA-Z0-9_-]+$";
-
     /// Validate and create a new ChannelName
     pub fn new(name: impl Into<String>) -> Result<Self> {
         let name: String = name.into();
@@ -182,7 +185,7 @@ impl ChannelName {
 
     /// Check if a string is a valid channel name
     fn is_valid(name: &str) -> bool {
-        let re = Regex::new(Self::VALID_PATTERN).unwrap();
+        let re = Regex::new(CHANNEL_PATTERN).unwrap();
         re.is_match(name)
     }
 }
@@ -248,7 +251,10 @@ impl ListFile {
     }
 
     /// Read videos from this list file
-    pub fn read_videos(&self) -> Result<Vec<Video>> {
+    ///
+    /// Returns a tuple of (parsed videos, unparseable lines).
+    /// Duplicate video IDs are automatically deduplicated.
+    pub fn read_videos(&self) -> Result<(Vec<Video>, Vec<String>)> {
         use std::fs::File;
         use std::io::{BufRead, BufReader};
 
@@ -257,6 +263,8 @@ impl ListFile {
         let reader = BufReader::new(file);
 
         let mut videos = Vec::new();
+        let mut unparseable = Vec::new();
+        let mut seen_ids = HashSet::new();
 
         let id_regex = Regex::new(r"[A-Za-z0-9_-]{11}$").unwrap();
 
@@ -268,31 +276,41 @@ impl ListFile {
                 continue;
             }
 
-            // Try parsing as URL first
-            if let Some(video) = Self::parse_video_from_url(line, &self.channel) {
-                videos.push(video);
-            }
-            // Then try parsing as title-id string
-            else if let Some(video) = Video::from_title_id_string(line) {
-                let video = Video::new(video.id, video.title, self.channel.clone());
-                videos.push(video);
-            }
-            // Try extracting ID from end of line
-            if let Some(caps) = id_regex.captures(line)
+            let video = if let Some(video) = Self::parse_video_from_url(line, &self.channel) {
+                Some(video)
+            } else if let Some(video) = Video::from_title_id_string(line) {
+                Some(Video::new(video.id, video.title, self.channel.clone()))
+            } else if let Some(caps) = id_regex.captures(line)
                 && let Ok(id) = VideoId::from_str(&caps[0])
             {
-                let title = line[..line.len() - 12].to_string();
-                videos.push(Video::new(id, title, self.channel.clone()));
+                let title = line[..line.len() - caps[0].len()]
+                    .trim_end()
+                    .trim_end_matches('-')
+                    .to_string();
+                Some(Video::new(id, title, self.channel.clone()))
+            } else {
+                unparseable.push(line.to_string());
+                None
+            };
+
+            if let Some(video) = video
+                && seen_ids.insert(video.id.clone())
+            {
+                videos.push(video);
             }
         }
 
-        Ok(videos)
+        if !unparseable.is_empty() {
+            tracing::warn!("{} unparseable lines in list file", unparseable.len());
+        }
+
+        Ok((videos, unparseable))
     }
 
     /// Parse a video from a YouTube URL
     fn parse_video_from_url(url: &str, channel: &Channel) -> Option<Video> {
         // Match watch?v= format
-        let watch_regex = Regex::new(r"youtube\.com/watch\?v=([A-Za-z0-9_-]{11})").unwrap();
+        let watch_regex = Regex::new(&format!(r"youtube\.com/watch\?v=({VIDEO_ID_PATTERN})")).unwrap();
         if let Some(caps) = watch_regex.captures(url)
             && let Ok(id) = VideoId::from_str(&caps[1])
         {
@@ -300,7 +318,7 @@ impl ListFile {
         }
 
         // Match youtu.be/ format
-        let short_regex = Regex::new(r"youtu\.be/([A-Za-z0-9_-]{11})").unwrap();
+        let short_regex = Regex::new(&format!(r"youtu\.be/({VIDEO_ID_PATTERN})")).unwrap();
         if let Some(caps) = short_regex.captures(url)
             && let Ok(id) = VideoId::from_str(&caps[1])
         {
@@ -386,5 +404,160 @@ mod tests {
             channel.comments_dir(),
             PathBuf::from("testchannel/comments")
         );
+    }
+
+    fn create_test_list_file(dir: &Path, name: &str, content: &str) -> ListFile {
+        let file_path = dir.join(name);
+        std::fs::write(&file_path, content).unwrap();
+        ListFile::from_path(&file_path).unwrap()
+    }
+
+    #[test]
+    fn test_read_videos_from_watch_url() {
+        let dir = tempfile::tempdir().unwrap();
+        let list_file = create_test_list_file(
+            dir.path(),
+            "testchannel-20240101.txt",
+            "https://www.youtube.com/watch?v=dQw4w9WgXcQ\n",
+        );
+
+        let (videos, unparseable) = list_file.read_videos().unwrap();
+        assert_eq!(videos.len(), 1);
+        assert_eq!(videos[0].id.to_string(), "dQw4w9WgXcQ");
+        assert_eq!(videos[0].title, "");
+        assert!(unparseable.is_empty());
+    }
+
+    #[test]
+    fn test_read_videos_from_short_url() {
+        let dir = tempfile::tempdir().unwrap();
+        let list_file = create_test_list_file(
+            dir.path(),
+            "testchannel-20240101.txt",
+            "https://youtu.be/dQw4w9WgXcQ\n",
+        );
+
+        let (videos, unparseable) = list_file.read_videos().unwrap();
+        assert_eq!(videos.len(), 1);
+        assert_eq!(videos[0].id.to_string(), "dQw4w9WgXcQ");
+        assert_eq!(videos[0].title, "");
+        assert!(unparseable.is_empty());
+    }
+
+    #[test]
+    fn test_read_videos_from_title_id_string() {
+        let dir = tempfile::tempdir().unwrap();
+        let list_file = create_test_list_file(
+            dir.path(),
+            "testchannel-20240101.txt",
+            "My Video Title-dQw4w9WgXcQ\n",
+        );
+
+        let (videos, unparseable) = list_file.read_videos().unwrap();
+        assert_eq!(videos.len(), 1);
+        assert_eq!(videos[0].id.to_string(), "dQw4w9WgXcQ");
+        assert_eq!(videos[0].title, "My Video Title");
+        assert!(unparseable.is_empty());
+    }
+
+    #[test]
+    fn test_read_videos_from_raw_id_at_end() {
+        let dir = tempfile::tempdir().unwrap();
+        let list_file = create_test_list_file(
+            dir.path(),
+            "testchannel-20240101.txt",
+            "Some text dQw4w9WgXcQ\n",
+        );
+
+        let (videos, unparseable) = list_file.read_videos().unwrap();
+        assert_eq!(videos.len(), 1);
+        assert_eq!(videos[0].id.to_string(), "dQw4w9WgXcQ");
+        assert_eq!(videos[0].title, "Some text");
+        assert!(unparseable.is_empty());
+    }
+
+    #[test]
+    fn test_read_videos_mixed_formats() {
+        let dir = tempfile::tempdir().unwrap();
+        let content = [
+            "https://www.youtube.com/watch?v=abc123xyz78",
+            "My Video-def456uvw12",
+            "https://youtu.be/ghi789rst34",
+            "Plain text jkl012mno56",
+        ]
+        .join("\n");
+
+        let list_file = create_test_list_file(dir.path(), "testchannel-20240101.txt", &content);
+
+        let (videos, unparseable) = list_file.read_videos().unwrap();
+        assert_eq!(videos.len(), 4);
+        assert!(unparseable.is_empty());
+    }
+
+    #[test]
+    fn test_read_videos_skips_empty_lines() {
+        let dir = tempfile::tempdir().unwrap();
+        let content = "\nhttps://www.youtube.com/watch?v=dQw4w9WgXcQ\n\n\n";
+
+        let list_file = create_test_list_file(dir.path(), "testchannel-20240101.txt", content);
+
+        let (videos, unparseable) = list_file.read_videos().unwrap();
+        assert_eq!(videos.len(), 1);
+        assert!(unparseable.is_empty());
+    }
+
+    #[test]
+    fn test_read_videos_reports_unparseable() {
+        let dir = tempfile::tempdir().unwrap();
+        let content =
+            "https://www.youtube.com/watch?v=dQw4w9WgXcQ\nthis is garbage\nanother bad line\n";
+
+        let list_file = create_test_list_file(dir.path(), "testchannel-20240101.txt", content);
+
+        let (videos, unparseable) = list_file.read_videos().unwrap();
+        assert_eq!(videos.len(), 1);
+        assert_eq!(unparseable.len(), 2);
+        assert_eq!(unparseable[0], "this is garbage");
+        assert_eq!(unparseable[1], "another bad line");
+    }
+
+    #[test]
+    fn test_read_videos_deduplicates() {
+        let dir = tempfile::tempdir().unwrap();
+        let content = [
+            "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+            "My Video-dQw4w9WgXcQ",
+            "dQw4w9WgXcQ",
+        ]
+        .join("\n");
+
+        let list_file = create_test_list_file(dir.path(), "testchannel-20240101.txt", &content);
+
+        let (videos, unparseable) = list_file.read_videos().unwrap();
+        assert_eq!(videos.len(), 1);
+        assert!(unparseable.is_empty());
+    }
+
+    #[test]
+    fn test_read_videos_empty_file() {
+        let dir = tempfile::tempdir().unwrap();
+        let list_file = create_test_list_file(dir.path(), "testchannel-20240101.txt", "");
+
+        let (videos, unparseable) = list_file.read_videos().unwrap();
+        assert!(videos.is_empty());
+        assert!(unparseable.is_empty());
+    }
+
+    #[test]
+    fn test_read_videos_preserves_channel() {
+        let dir = tempfile::tempdir().unwrap();
+        let list_file = create_test_list_file(
+            dir.path(),
+            "mychannel-20240101.txt",
+            "https://www.youtube.com/watch?v=dQw4w9WgXcQ\n",
+        );
+
+        let (videos, _) = list_file.read_videos().unwrap();
+        assert_eq!(videos[0].channel.name.to_string(), "mychannel");
     }
 }

@@ -47,14 +47,11 @@ pub enum Commands {
         /// Directory containing video files
         directory: PathBuf,
         /// Process subdirectories recursively
-        #[arg(short, long)]
+        #[arg(short, long, action = clap::ArgAction::SetTrue)]
         recursive: bool,
         /// Preview changes without renaming
-        #[arg(short, long)]
+        #[arg(short, long, action = clap::ArgAction::SetTrue)]
         dry_run: bool,
-        /// Show each rename operation
-        #[arg(short, long)]
-        verbose: bool,
         /// File extensions to process
         #[arg(short = 'e', long, default_values = ["mkv", "mp4", "description"])]
         extensions: Vec<String>,

@@ -46,7 +46,6 @@ fn run() -> Result<()> {
             directory,
             recursive,
             dry_run,
-            verbose,
             extensions,
         } => {
             tracing::debug!(
@@ -55,7 +54,7 @@ fn run() -> Result<()> {
                 recursive,
                 dry_run
             );
-            midnite_archive::cli::rename(&directory, recursive, dry_run, verbose, &extensions)?;
+            midnite_archive::cli::rename(&directory, recursive, dry_run, &extensions)?;
         }
     }
 
