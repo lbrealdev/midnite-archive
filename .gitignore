@@ -142,6 +142,7 @@ test.txt
 **/lists/
 **/videos/
 docs_**
+test/
 
 # IDEs and editors
 .idea/
