@@ -310,7 +310,8 @@ impl ListFile {
     /// Parse a video from a YouTube URL
     fn parse_video_from_url(url: &str, channel: &Channel) -> Option<Video> {
         // Match watch?v= format
-        let watch_regex = Regex::new(&format!(r"youtube\.com/watch\?v=({VIDEO_ID_PATTERN})")).unwrap();
+        let watch_regex =
+            Regex::new(&format!(r"youtube\.com/watch\?v=({VIDEO_ID_PATTERN})")).unwrap();
         if let Some(caps) = watch_regex.captures(url)
             && let Ok(id) = VideoId::from_str(&caps[1])
         {

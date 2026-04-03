@@ -23,16 +23,22 @@ pub fn execute(channel_input: &str, filter: Option<&str>) -> Result<()> {
     let timestamp = get_timestamp();
     let list_dir = channel.lists_dir();
 
-    let base_name = format!("{}-list-{}", channel.name, timestamp);
-    let title_file = list_dir.join(format!(
-        "{}.txt",
-        base_name.replacen("list", "list-title", 1)
+    let filtered_suffix = filter
+        .as_ref()
+        .map_or(String::new(), |_| "-filtered".to_string());
+    let file_prefix = format!("{}-list-", channel.name);
+    let title_file_path = list_dir.join(format!(
+        "{}title{}-{}.txt",
+        file_prefix, filtered_suffix, timestamp
     ));
-    let url_file = list_dir.join(format!("{}.txt", base_name.replacen("list", "list-url", 1)));
+    let url_file_path = list_dir.join(format!(
+        "{}url{}-{}.txt",
+        file_prefix, filtered_suffix, timestamp
+    ));
 
     tracing::info!("Generating output files...");
-    tracing::debug!("Title file: {}", title_file.display());
-    tracing::debug!("URL file: {}", url_file.display());
+    tracing::debug!("Title file: {}", title_file_path.display());
+    tracing::debug!("URL file: {}", url_file_path.display());
 
     tracing::debug!("Checking if {} directory exists...", channel.name);
 
@@ -49,13 +55,13 @@ pub fn execute(channel_input: &str, filter: Option<&str>) -> Result<()> {
     yt_dlp::check_available()?;
 
     // Generate list and get back structured video data
-    let videos = yt_dlp::generate_channel_list(&channel, &title_file, filter)
+    let videos = yt_dlp::generate_channel_list(&channel, &title_file_path, filter)
         .with_context(|| "Failed to generate channel list")?;
 
     tracing::info!("Fetched {} videos from channel", videos.len());
 
     // Write URL file using strongly-typed Video data
-    generate_url_file(&videos, &url_file).with_context(|| "Failed to generate URL file")?;
+    generate_url_file(&videos, &url_file_path).with_context(|| "Failed to generate URL file")?;
 
     tracing::info!("Done!");
 
@@ -65,8 +71,8 @@ pub fn execute(channel_input: &str, filter: Option<&str>) -> Result<()> {
     } else {
         println!("✓ {} videos", videos.len());
     }
-    println!("  Title: {}", title_file.display());
-    println!("  URLs: {}", url_file.display());
+    println!("  Title: {}", title_file_path.display());
+    println!("  URLs: {}", url_file_path.display());
 
     Ok(())
 }
