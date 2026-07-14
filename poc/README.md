@@ -21,17 +21,28 @@ command reimplementation.
 ```shell
 export PATH="$HOME/.local/bin:$HOME/.deno/bin:$PATH"
 
+just poc::build
+just poc::ytdrs
+just poc::boul2gom
+POC_VIDEO_URL='https://...' just poc::ytdrs
+just poc::clean
+```
+
+Optional overrides:
+
+```shell
+just poc::ytdrs 'https://www.youtube.com/watch?v=VIDEO_ID'
+POC_ERROR=1 just poc::ytdrs
+```
+
+Manual cargo (without Just):
+
+```shell
 # ytd-rs
 POC_OUT=out cargo run --release --manifest-path poc/ytd-rs/Cargo.toml
 
 # boul2gom (pins yt-dlp =2.1.0; see RESULTS.md)
 POC_OUT=out POC_LIBS=libs cargo run --release --manifest-path poc/boul2gom/Cargo.toml
-```
-
-Optional:
-
-```shell
-POC_ERROR=1 cargo run --release --manifest-path poc/ytd-rs/Cargo.toml -- 'https://www.youtube.com/watch?v=INVALID____'
 ```
 
 ## Metrics

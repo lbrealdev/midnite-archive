@@ -1,3 +1,5 @@
+mod poc 'poc/poc.just'
+
 # Alias
 
 alias t := mise-tools
