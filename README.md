@@ -85,6 +85,7 @@ just ci-pin    # Pin GitHub Actions to SHAs
 ## Documentation
 
 - [Requirements](docs/requirements.md) - Setup and installation guide
+- [CLI UX Spec](docs/cli-ux.md) - Output contract, paths, and command summaries
 - [Troubleshooting](docs/troubleshooting.md) - Common issues and solutions
 - [Processing Comments](docs/processing-comments.md) - YouTube comment data extraction
 - [tmux](docs/tmux.md) - Running long downloads in background
