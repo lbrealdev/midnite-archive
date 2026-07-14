@@ -48,3 +48,7 @@ POC_OUT=out POC_LIBS=libs cargo run --release --manifest-path poc/boul2gom/Cargo
 ## Metrics
 
 See [RESULTS.md](RESULTS.md).
+
+**Decision:** prefer `ytd-rs` for production integration (smaller binary, raw
+yt-dlp args + EJS/Deno, MIT). Local `just poc::ytdrs` succeeded; `boul2gom`
+reported a false download success with an empty output dir.

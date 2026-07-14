@@ -78,15 +78,13 @@ async fn main() -> Result<()> {
         .await
         .context("download_video_with_progress failed")?;
     let events = progress_events.load(Ordering::SeqCst);
-    println!(
-        "download_ok file={outfile} progress_events={events} elapsed_ms={}",
-        t1.elapsed().as_millis()
-    );
+    let dl_ms = t1.elapsed().as_millis();
+    println!("download_reported file={outfile} progress_events={events} elapsed_ms={dl_ms}");
 
     // Honest gaps vs midnite-archive needs:
     println!("ejs_deno=unknown (no documented raw --remote-components/--js-runtimes passthrough in used API)");
     println!("arbitrary_args=fail-for-our-needs (high-level API; cannot pass --write-description / --download-archive here)");
-    println!("progress_api=pass (download_video_with_progress callback)");
+    println!("progress_api=shape-ok (download_video_with_progress callback)");
 
     if env::var("POC_ERROR").ok().as_deref() == Some("1") {
         match downloader
@@ -99,13 +97,22 @@ async fn main() -> Result<()> {
     }
 
     let path = out_dir.join(&outfile);
-    if !path.exists() {
-        // Some versions may write a different extension; accept any file in out_dir.
-        let any = std::fs::read_dir(&out_dir)?.next().is_some();
-        if !any {
-            bail!("download reported success but output dir is empty");
-        }
+    let any = std::fs::read_dir(&out_dir)?
+        .filter_map(|e| e.ok())
+        .any(|e| e.file_type().map(|t| t.is_file()).unwrap_or(false));
+    if !path.exists() && !any {
+        bail!(
+            "download reported success but output dir is empty \
+             (progress_events={events}, elapsed_ms={dl_ms})"
+        );
     }
+    if events == 0 {
+        bail!(
+            "download reported success with zero progress events \
+             (file may exist, but progress API did not fire; elapsed_ms={dl_ms})"
+        );
+    }
+    println!("download_ok file={outfile} progress_events={events} elapsed_ms={dl_ms}");
     Ok(())
 }
 

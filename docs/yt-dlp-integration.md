@@ -107,13 +107,13 @@ flags, offers progress streaming for a future TUI, and avoids committing the
 whole project to GPL before API fit is known.
 
 **PoC status (2026-07-14):** completed in [`poc/`](../poc/README.md).
-Measured results favor `ytd-rs` (smaller binary/deps, raw-arg + EJS flexibility).
-See [`poc/RESULTS.md`](../poc/RESULTS.md). `boul2gom/yt-dlp` 2.7.x currently fails
-crates.io resolution (`lofty` yanked); PoC used `=2.1.0`.
+Decision: **use `ytd-rs`**. Local maintainer run confirmed full download + EJS/Deno
++ arbitrary args; `boul2gom/yt-dlp` reported success with empty output / zero
+progress. See [`poc/RESULTS.md`](../poc/RESULTS.md). `boul2gom/yt-dlp` 2.7.x
+currently fails crates.io resolution (`lofty` yanked); PoC used `=2.1.0`.
 
-Do not expose either crate's types from the CLI or domain modules. Define
-midnite-archive request, result, and progress types, then adapt the selected
-crate internally:
+Do not expose `ytd-rs` types from the CLI or domain modules. Define
+midnite-archive request, result, and progress types, then adapt internally:
 
 ```text
 CLI / future TUI
@@ -124,14 +124,12 @@ midnite-archive service API
         v
 YtDlpBackend
         |
-        +-- ytd-rs (preferred spike)
-        |
-        +-- boul2gom/yt-dlp (fallback evaluation)
+        +-- ytd-rs (selected)
 ```
 
-The `boul2gom/yt-dlp` crate remains the fallback if the spike shows that
-automatic dependency management or typed hooks materially outweigh the GPL
-licensing impact.
+Keep `boul2gom/yt-dlp` as historical comparison only unless crates.io latest
+resolves, raw-arg parity is proven, false-success download behavior is fixed,
+and the project explicitly accepts GPL-3.0.
 
 ## Spike acceptance criteria
 

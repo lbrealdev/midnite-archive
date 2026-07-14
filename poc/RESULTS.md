@@ -3,10 +3,15 @@
 Issue: [#50](https://github.com/lbrealdev/midnite-archive/issues/50)
 
 Date: 2026-07-14  
-Host: Linux x86_64 (cloud agent)  
+Host: Linux x86_64 (cloud agent + local maintainer)  
 Test URL: `https://www.youtube.com/watch?v=jNQXAC9IVRw` (“Me at the zoo”)
 
-Both live runs hit the same YouTube bot-check (`Sign in to confirm you’re not a bot`). Metrics below are still useful for integration cost, size, flexibility, and packaging.
+## Environments
+
+| Env | Result |
+|-----|--------|
+| Cloud agent | Both backends hit YouTube bot-check (`Sign in to confirm you’re not a bot`). Compile/API/size metrics still stand. |
+| Local maintainer | **`just poc::ytdrs` full success** (metadata + download + description sidecar + progress). **`just poc::boul2gom`** metadata OK, then reported `download_ok` with `progress_events=0` / `elapsed_ms=0` and empty `out/` → recipe failed. |
 
 ## Matrix
 
@@ -18,12 +23,13 @@ Both live runs hit the same YouTube bot-check (`Sign in to confirm you’re not 
 | Binary size (stripped) | 1,037,632 B (~1.0 MiB) | 9,756,856 B (~9.3 MiB) |
 | `cargo tree` lines | 60 | 430 |
 | Structured metadata API | pass (`get_info`) | pass (`fetch_video_infos`) |
-| Progress API | pass (`download_process` line stream) | pass (`download_video_with_progress`) |
+| Progress API | pass (`download_process` line stream) | pass API shape; **local live: 0 events** |
 | Arbitrary yt-dlp args | **pass** (`.arg` / `.arg_with`) | **fail for our needs** (high-level download API; no raw flag path used) |
 | EJS + Deno flags | **pass** (can pass `--remote-components` / `--js-runtimes`) | **unknown / not exposed** in the API used here |
 | yt-dlp/ffmpeg install | requires system PATH | **pass** (`with_new_binaries`, ~1.3 s here) |
-| Error quality | clear yt-dlp stderr via anyhow | clear command failure + stderr |
-| Live YouTube fetch (this env) | blocked (bot check) | blocked (bot check) |
+| Error quality | clear yt-dlp stderr via anyhow | clear command failure + stderr; **false success risk** if empty out |
+| Live YouTube fetch (cloud) | blocked (bot check) | blocked (bot check) |
+| Live YouTube fetch (local) | **pass** (full download) | **fail** (claimed success, empty out) |
 | License (repo file) | MIT (`LICENSE`) | GPL-3.0-only |
 | License (crates.io metadata) | `unknown` | `GPL-3.0-only` |
 | Latest crates.io usability | ok | **2.7.x fails resolve** (`lofty` 0.23.2/0.23.3 yanked); PoC pinned `=2.1.0` |
@@ -35,6 +41,7 @@ Both live runs hit the same YouTube bot-check (`Sign in to confirm you’re not 
 - Smallest integration and binary by a wide margin.
 - Best match for midnite-archive’s current need: keep yt-dlp flags (`--download-archive`, `--write-comments`, EJS/Deno, output templates).
 - Progress is raw stdout lines — fine for CLI/TUI after light parsing.
+- Local run confirmed EJS/Deno + `--write-description` + real download output.
 - Does not manage binaries; Linux/macOS/Windows packaging must install yt-dlp/ffmpeg (and Deno for EJS) separately.
 - Clarify crates.io license metadata with upstream (repo LICENSE is MIT).
 
@@ -45,6 +52,7 @@ Both live runs hit the same YouTube bot-check (`Sign in to confirm you’re not 
 - GPL-3.0-only would force midnite-archive GPL if linked into the shipped binary.
 - Latest published versions (2.7.x) currently do not resolve on crates.io because of yanked `lofty` dependencies — a real adoption risk until fixed upstream.
 - Without a documented raw-arg escape hatch in the path we exercised, it is a poor fit for preserving midnite-archive’s exact yt-dlp flags.
+- Local live run showed a false-success path (API returned Ok with no progress and no files). The PoC now fails closed when `out/` is empty.
 
 ## Recommendation
 
@@ -54,13 +62,23 @@ Revisit `boul2gom/yt-dlp` only if:
 
 1. crates.io latest versions resolve again, and
 2. raw yt-dlp argument passthrough (or equivalent) is proven for archive/comments/EJS, and
-3. the project explicitly accepts GPL-3.0.
+3. the project explicitly accepts GPL-3.0, and
+4. the empty-output / zero-progress false-success behavior is fixed upstream.
 
 ## How to reproduce
 
 ```shell
 export PATH="$HOME/.local/bin:$HOME/.deno/bin:$PATH"
 
+just poc::build
+just poc::ytdrs
+just poc::boul2gom
+just poc::clean
+```
+
+Or manually:
+
+```shell
 cargo clean --manifest-path poc/ytd-rs/Cargo.toml
 cargo build --release --manifest-path poc/ytd-rs/Cargo.toml
 POC_OUT=out cargo run --release --manifest-path poc/ytd-rs/Cargo.toml
