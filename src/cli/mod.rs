@@ -53,7 +53,7 @@ pub enum Commands {
         #[arg(short, long, action = clap::ArgAction::SetTrue)]
         dry_run: bool,
         /// File extensions to process
-        #[arg(short = 'e', long, default_values = ["mkv", "mp4", "description"])]
+        #[arg(short = 'e', long, default_values = ["mkv", "mp4", "webm", "description"])]
         extensions: Vec<String>,
     },
 }

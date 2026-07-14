@@ -33,14 +33,17 @@ pub fn execute(
 
     if renames.is_empty() {
         tracing::info!("No files to rename.");
+        println!("✓ No files to rename.");
         return Ok(());
     }
 
     if dry_run {
         display_rename_table(&renames);
         tracing::info!("Dry run complete. Would rename {} files.", renames.len());
+        println!("Dry run: would rename {} file(s).", renames.len());
     } else {
         let mut success_count = 0;
+        let mut failure_count = 0;
         for (source_path, new_name) in &renames {
             let new_path = source_path.parent().unwrap().join(new_name);
             let final_path = handle_conflict(&new_path);
@@ -56,10 +59,16 @@ pub fn execute(
                 }
                 Err(e) => {
                     tracing::error!("Error renaming {}: {}", source_path.display(), e);
+                    eprintln!("Error renaming {}: {}", source_path.display(), e);
+                    failure_count += 1;
                 }
             }
         }
         tracing::info!("Renamed {} files.", success_count);
+        println!("✓ Renamed {} file(s).", success_count);
+        if failure_count > 0 {
+            bail!("Failed to rename {} file(s)", failure_count);
+        }
     }
 
     Ok(())
@@ -125,7 +134,7 @@ fn display_rename_table(renames: &RenameList) {
         table.add_row(vec![&source_name, new_name]);
     }
 
-    tracing::info!("\n{table}");
+    println!("{table}");
 }
 
 fn sanitize_filename(path: &Path, re: &Regex, underscore_re: &Regex) -> String {

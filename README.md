@@ -67,7 +67,7 @@ midnite-archive rename severo12/videos
 | `-d, --dry-run`    | Preview changes without renaming                          |
 | `-r, --recursive`  | Process subdirectories recursively                        |
 | `-v, --verbose`    | Show each rename operation                                |
-| `-e, --extensions` | File extensions to process (default: mkv mp4 description) |
+| `-e, --extensions` | File extensions to process (default: mkv mp4 webm description) |
 
 ## Development
 

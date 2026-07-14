@@ -122,8 +122,8 @@ With `-v`, expect list parsing and per-video previews as `INFO` lines.
 
 **Behavior notes:**
 
-- Dry-run builds a source → renamed table.
-- Today the table is emitted via tracing (`INFO`), so **dry-run is easiest to see with `-v`** until stdout is unified.
+- Dry-run prints a source → renamed table on stdout without modifying files.
+- Default extensions are `mkv`, `mp4`, `webm`, and `description`.
 
 ## Error shape
 
@@ -138,6 +138,6 @@ Exit code `1`. Prefer actionable messages (missing yt-dlp/deno, bad path, invali
 Tracked here so future CLI changes stay aligned with this spec:
 
 - [ ] Make `download` / `comments` summaries as informative as `generate` (paths + counts on stdout by default).
-- [ ] Print `rename` dry-run table on stdout (not only via `-v` tracing).
+- [x] Print `rename` dry-run table on stdout (not only via `-v` tracing).
 - [ ] Align status ornaments (`✓` vs stats emoji) under one style.
 - [ ] Prefer channel display without forcing `@` when the input is a `UC…` channel id.
