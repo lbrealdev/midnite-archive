@@ -1,0 +1,12 @@
+[package]
+name = "poc-boul2gom"
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+[dependencies]
+anyhow = "1"
+tokio = { version = "1", features = ["full"] }
+# 2.7.x currently fails resolution (lofty 0.23.2/0.23.3 yanked). Pin last fetchable.
+yt-dlp = { version = "=2.1.0", features = ["hooks"] }
+which = "8"

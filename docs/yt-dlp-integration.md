@@ -106,6 +106,11 @@ midnite-archive-owned backend boundary. It best preserves the current yt-dlp
 flags, offers progress streaming for a future TUI, and avoids committing the
 whole project to GPL before API fit is known.
 
+**PoC status (2026-07-14):** completed in [`poc/`](../poc/README.md).
+Measured results favor `ytd-rs` (smaller binary/deps, raw-arg + EJS flexibility).
+See [`poc/RESULTS.md`](../poc/RESULTS.md). `boul2gom/yt-dlp` 2.7.x currently fails
+crates.io resolution (`lofty` yanked); PoC used `=2.1.0`.
+
 Do not expose either crate's types from the CLI or domain modules. Define
 midnite-archive request, result, and progress types, then adapt the selected
 crate internally:
