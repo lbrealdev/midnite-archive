@@ -72,14 +72,16 @@ midnite-archive rename severo12/videos
 ## Development
 
 ```shell
-just build     # Build debug binary
-just release   # Build optimized binary
-just check     # Check compilation
-just test      # Run tests
-just lint      # Run clippy
-just fmt       # Format code
-just ci-scan   # Security audit workflows
-just ci-pin    # Pin GitHub Actions to SHAs
+just build             # Build debug binary
+just release           # Build optimized binary
+just check             # Check compilation
+just test              # Run tests
+just lint              # Run clippy
+just fmt               # Format code
+just ci-scan           # Security audit workflows
+just ci-pin            # Pin GitHub Actions to SHAs
+just mise-upgrade-dry  # Preview mise tool upgrades
+just mise-upgrade      # Apply mise tool upgrades
 ```
 
 ## Documentation

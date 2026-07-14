@@ -49,6 +49,14 @@ alias t := mise-tools
 @mise-tools:
     mise ls --json | jq -r --arg pwd "$(pwd)" 'to_entries[] | select(.value[].source.path != null and (.value[].source.path | contains($pwd))) | .key'
 
+# Preview mise tool upgrades (no changes)
+@mise-upgrade-dry:
+    mise upgrade --dry-run
+
+# Apply mise tool upgrades from mise.toml
+@mise-upgrade:
+    mise upgrade
+
 # List GitHub Actions workflows
 @workflows:
     gh workflow list --json name --jq "to_entries[] | .value.name"
