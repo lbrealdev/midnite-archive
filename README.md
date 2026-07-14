@@ -80,8 +80,8 @@ just lint              # Run clippy
 just fmt               # Format code
 just ci-scan           # Security audit workflows
 just ci-pin            # Pin GitHub Actions to SHAs
-just mise-upgrade-dry  # Preview mise tool upgrades
-just mise-upgrade      # Apply mise tool upgrades
+just mise-upgrade-dry  # Preview local mise.toml tool upgrades
+just mise-upgrade      # Apply local mise.toml tool upgrades
 ```
 
 ## Documentation
