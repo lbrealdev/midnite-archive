@@ -41,6 +41,9 @@ midnite-archive <COMMAND>
 # Generate channel list
 midnite-archive generate @severo12
 
+# Generate filtered list (title regex via yt-dlp --match-title)
+midnite-archive generate @severo12 --filter live
+
 # Download from list file
 midnite-archive download severo12/lists/severo12-list-url-*.txt
 
@@ -82,6 +85,8 @@ just ci-pin    # Pin GitHub Actions to SHAs
 ## Documentation
 
 - [Requirements](docs/requirements.md) - Setup and installation guide
+- [CLI UX Spec](docs/cli-ux.md) - Output contract, paths, and command summaries
+- [yt-dlp Rust Integration](docs/yt-dlp-integration.md) - Wrapper options and migration criteria
 - [Troubleshooting](docs/troubleshooting.md) - Common issues and solutions
 - [Processing Comments](docs/processing-comments.md) - YouTube comment data extraction
 - [tmux](docs/tmux.md) - Running long downloads in background
