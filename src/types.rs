@@ -129,7 +129,11 @@ impl Channel {
     }
 
     pub fn url(&self) -> String {
-        format!("https://www.youtube.com/@{}", self.name)
+        if self.name.is_channel_id() {
+            format!("https://www.youtube.com/channel/{}", self.name)
+        } else {
+            format!("https://www.youtube.com/@{}", self.name)
+        }
     }
 
     /// Get the base directory for this channel
@@ -171,16 +175,25 @@ impl ChannelName {
         }
     }
 
-    /// Parse from various input formats (URL, @name, or plain name)
+    /// Parse from various input formats (handle URL, channel ID URL, @name, or plain name)
     pub fn parse(input: &str) -> Result<Self> {
-        let re = Regex::new(r"/@([^/]+)").unwrap();
-        let name = if let Some(caps) = re.captures(input) {
+        let handle_re = Regex::new(r"/@([^/?#]+)").unwrap();
+        let channel_id_re = Regex::new(r"/channel/(UC[A-Za-z0-9_-]{22})").unwrap();
+
+        let name = if let Some(caps) = handle_re.captures(input) {
+            caps[1].to_string()
+        } else if let Some(caps) = channel_id_re.captures(input) {
             caps[1].to_string()
         } else {
             input.strip_prefix('@').unwrap_or(input).to_string()
         };
 
         Self::new(name)
+    }
+
+    /// YouTube channel IDs are 24 characters starting with "UC"
+    pub fn is_channel_id(&self) -> bool {
+        self.0.len() == 24 && self.0.starts_with("UC")
     }
 
     /// Check if a string is a valid channel name
@@ -234,17 +247,34 @@ impl ListFile {
         })
     }
 
-    /// Extract channel name from list file path
+    /// Extract channel name from list file path.
+    ///
+    /// Expected patterns (optional `.txt` suffix):
+    /// - `{channel}-list-url[-filtered]-{timestamp}`
+    /// - `{channel}-list-title[-filtered]-{timestamp}`
+    /// - `{channel}-list[-filtered]-{timestamp}`
     fn extract_channel_from_path(path: &Path) -> Result<Channel> {
         let file_name = path
             .file_name()
             .and_then(|n| n.to_str())
             .context("Failed to extract filename from path")?;
 
-        let channel_name = file_name
-            .split('-')
-            .next()
-            .context("Failed to extract channel name from filename")?;
+        let stem = file_name.strip_suffix(".txt").unwrap_or(file_name);
+
+        let channel_name = if let Some(idx) = stem.find("-list") {
+            &stem[..idx]
+        } else {
+            stem.split('-')
+                .next()
+                .context("Failed to extract channel name from filename")?
+        };
+
+        if channel_name.is_empty() {
+            bail!(
+                "Failed to extract channel name from filename: {}",
+                file_name
+            );
+        }
 
         let name = ChannelName::new(channel_name)?;
         Ok(Channel::new(name))
@@ -310,7 +340,8 @@ impl ListFile {
     /// Parse a video from a YouTube URL
     fn parse_video_from_url(url: &str, channel: &Channel) -> Option<Video> {
         // Match watch?v= format
-        let watch_regex = Regex::new(&format!(r"youtube\.com/watch\?v=({VIDEO_ID_PATTERN})")).unwrap();
+        let watch_regex =
+            Regex::new(&format!(r"youtube\.com/watch\?v=({VIDEO_ID_PATTERN})")).unwrap();
         if let Some(caps) = watch_regex.captures(url)
             && let Ok(id) = VideoId::from_str(&caps[1])
         {
@@ -378,6 +409,23 @@ mod tests {
 
         let plain = ChannelName::parse("testchannel").unwrap();
         assert_eq!(plain.to_string(), "testchannel");
+
+        let from_channel_id_url =
+            ChannelName::parse("https://www.youtube.com/channel/UCzVYPvtfWW349M7KyHmVmtA").unwrap();
+        assert_eq!(from_channel_id_url.to_string(), "UCzVYPvtfWW349M7KyHmVmtA");
+        assert!(from_channel_id_url.is_channel_id());
+    }
+
+    #[test]
+    fn test_channel_url_for_handle_and_id() {
+        let handle = Channel::new(ChannelName::new("severo12").unwrap());
+        assert_eq!(handle.url(), "https://www.youtube.com/@severo12");
+
+        let id = Channel::new(ChannelName::new("UCzVYPvtfWW349M7KyHmVmtA").unwrap());
+        assert_eq!(
+            id.url(),
+            "https://www.youtube.com/channel/UCzVYPvtfWW349M7KyHmVmtA"
+        );
     }
 
     #[test]
@@ -559,5 +607,29 @@ mod tests {
 
         let (videos, _) = list_file.read_videos().unwrap();
         assert_eq!(videos[0].channel.name.to_string(), "mychannel");
+    }
+
+    #[test]
+    fn test_extract_channel_from_hyphenated_list_filename() {
+        let dir = tempfile::tempdir().unwrap();
+        let list_file = create_test_list_file(
+            dir.path(),
+            "foo-bar-list-url-20240101120000.txt",
+            "https://www.youtube.com/watch?v=dQw4w9WgXcQ\n",
+        );
+
+        assert_eq!(list_file.channel.name.to_string(), "foo-bar");
+    }
+
+    #[test]
+    fn test_extract_channel_from_filtered_list_filename() {
+        let dir = tempfile::tempdir().unwrap();
+        let list_file = create_test_list_file(
+            dir.path(),
+            "severo12-list-url-filtered-20240101120000.txt",
+            "https://www.youtube.com/watch?v=dQw4w9WgXcQ\n",
+        );
+
+        assert_eq!(list_file.channel.name.to_string(), "severo12");
     }
 }

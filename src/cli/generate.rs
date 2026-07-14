@@ -4,7 +4,7 @@ use anyhow::{Context, Result};
 use chrono::Local;
 use std::fs::{self, File};
 use std::io::Write;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 pub fn execute(channel_input: &str, filter: Option<&str>) -> Result<()> {
     tracing::info!("Generating video list for: {}", channel_input);
@@ -17,18 +17,13 @@ pub fn execute(channel_input: &str, filter: Option<&str>) -> Result<()> {
     let channel_name = ChannelName::parse(channel_input)?;
     let channel = Channel::new(channel_name);
 
-    tracing::info!("YouTube channel name: @{}", channel.name);
+    tracing::info!("YouTube channel: {}", channel.name);
     tracing::info!("YouTube channel url: {}", channel.url());
 
     let timestamp = get_timestamp();
     let list_dir = channel.lists_dir();
-
-    let base_name = format!("{}-list-{}", channel.name, timestamp);
-    let title_file = list_dir.join(format!(
-        "{}.txt",
-        base_name.replacen("list", "list-title", 1)
-    ));
-    let url_file = list_dir.join(format!("{}.txt", base_name.replacen("list", "list-url", 1)));
+    let (title_file, url_file) =
+        list_output_paths(&list_dir, channel.name.as_ref(), filter, &timestamp);
 
     tracing::info!("Generating output files...");
     tracing::debug!("Title file: {}", title_file.display());
@@ -75,6 +70,24 @@ fn get_timestamp() -> String {
     Local::now().format("%Y%m%d%H%M%S").to_string()
 }
 
+/// Build title/url list paths, adding `-filtered` when a filter is set.
+fn list_output_paths(
+    list_dir: &Path,
+    channel_name: &str,
+    filter: Option<&str>,
+    timestamp: &str,
+) -> (PathBuf, PathBuf) {
+    let filtered_suffix = if filter.is_some() { "-filtered" } else { "" };
+    let file_prefix = format!("{channel_name}-list-");
+
+    let title_file = list_dir.join(format!(
+        "{file_prefix}title{filtered_suffix}-{timestamp}.txt"
+    ));
+    let url_file = list_dir.join(format!("{file_prefix}url{filtered_suffix}-{timestamp}.txt"));
+
+    (title_file, url_file)
+}
+
 fn generate_url_file(videos: &[Video], url_file: &PathBuf) -> Result<()> {
     let mut output = File::create(url_file)
         .with_context(|| format!("Failed to create URL file: {:?}", url_file))?;
@@ -86,4 +99,45 @@ fn generate_url_file(videos: &[Video], url_file: &PathBuf) -> Result<()> {
     tracing::debug!("Written {} URLs to {}", videos.len(), url_file.display());
 
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn list_paths_without_filter() {
+        let (title, url) = list_output_paths(
+            Path::new("severo12/lists"),
+            "severo12",
+            None,
+            "20240101120000",
+        );
+        assert_eq!(
+            title,
+            PathBuf::from("severo12/lists/severo12-list-title-20240101120000.txt")
+        );
+        assert_eq!(
+            url,
+            PathBuf::from("severo12/lists/severo12-list-url-20240101120000.txt")
+        );
+    }
+
+    #[test]
+    fn list_paths_with_filter() {
+        let (title, url) = list_output_paths(
+            Path::new("foo-bar/lists"),
+            "foo-bar",
+            Some("live"),
+            "20240101120000",
+        );
+        assert_eq!(
+            title,
+            PathBuf::from("foo-bar/lists/foo-bar-list-title-filtered-20240101120000.txt")
+        );
+        assert_eq!(
+            url,
+            PathBuf::from("foo-bar/lists/foo-bar-list-url-filtered-20240101120000.txt")
+        );
+    }
 }

@@ -24,18 +24,9 @@ pub fn execute(list_file: &Path) -> Result<()> {
 
     tracing::debug!("Checking if {} directory exists...", list_file.channel.name);
 
-    if !list_file.channel.base_dir().exists() {
-        fs::create_dir_all(&comments_dir)
-            .with_context(|| format!("Failed to create directory: {:?}", comments_dir))?;
-        tracing::info!("Directory created: {}", list_file.channel.name);
-    } else {
-        fs::create_dir_all(&comments_dir)
-            .with_context(|| format!("Failed to create directory: {:?}", comments_dir))?;
-        tracing::info!(
-            "{} directory already exists, creating comments directory...",
-            list_file.channel.name
-        );
-    }
+    fs::create_dir_all(&comments_dir)
+        .with_context(|| format!("Failed to create directory: {:?}", comments_dir))?;
+    tracing::info!("Comments directory ready: {}", comments_dir.display());
 
     let file_stem = list_file
         .path

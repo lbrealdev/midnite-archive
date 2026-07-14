@@ -41,6 +41,9 @@ midnite-archive <COMMAND>
 # Generate channel list
 midnite-archive generate @severo12
 
+# Generate filtered list (title regex via yt-dlp --match-title)
+midnite-archive generate @severo12 --filter live
+
 # Download from list file
 midnite-archive download severo12/lists/severo12-list-url-*.txt
 
