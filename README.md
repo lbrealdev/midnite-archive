@@ -82,6 +82,10 @@ just ci-scan           # Security audit workflows
 just ci-pin            # Pin GitHub Actions to SHAs
 just mise-upgrade-dry  # Preview local mise.toml tool upgrades
 just mise-upgrade      # Apply local mise.toml tool upgrades
+just poc::build        # Build yt-dlp wrapper PoCs
+just poc::ytdrs        # Run ytd-rs PoC
+just poc::ytdlp        # Run yt-dlp (rs) PoC
+just poc::clean        # Clean PoC build and download dirs
 ```
 
 ## Documentation
@@ -89,6 +93,7 @@ just mise-upgrade      # Apply local mise.toml tool upgrades
 - [Requirements](docs/requirements.md) - Setup and installation guide
 - [CLI UX Spec](docs/cli-ux.md) - Output contract, paths, and command summaries
 - [yt-dlp Rust Integration](docs/yt-dlp-integration.md) - Wrapper options and migration criteria
+- [yt-dlp wrapper PoC](poc/README.md) - Side-by-side example crates and [results](poc/RESULTS.md)
 - [Troubleshooting](docs/troubleshooting.md) - Common issues and solutions
 - [Processing Comments](docs/processing-comments.md) - YouTube comment data extraction
 - [tmux](docs/tmux.md) - Running long downloads in background

@@ -155,3 +155,9 @@ docs_**
 # Added by cargo
 
 /target
+
+# PoC outputs (issue #50)
+poc/**/out/
+poc/**/libs/
+poc/**/target/
+
