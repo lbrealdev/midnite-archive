@@ -13,13 +13,18 @@ command reimplementation.
 ## Prerequisites
 
 - Rust stable
-- For `ytd-rs`: `yt-dlp` and `deno` on `PATH`
+- From repo root: `mise install` (tools from [`mise.toml`](../mise.toml), including `deno` and `yt-dlp`)
+- For `ytd-rs`: `yt-dlp` and `deno` must resolve on `PATH` (`which deno`, `which yt-dlp`)
 - For `boul2gom`: network (crate can download yt-dlp/ffmpeg into `libs/`); Deno still useful for EJS if used
+
+The PoC crates resolve Deno themselves once it is on `PATH` — you do not need to pass `$(which deno)` manually.
 
 ## Run
 
 ```shell
-export PATH="$HOME/.local/bin:$HOME/.deno/bin:$PATH"
+# From repo root — activate mise tools for this shell
+mise install
+eval "$(mise activate bash)"   # use zsh/fish equivalent if needed
 
 just poc::build
 just poc::ytdrs
@@ -27,6 +32,14 @@ just poc::boul2gom
 POC_VIDEO_URL='https://...' just poc::ytdrs
 just poc::clean
 ```
+
+One-shot without activating the shell:
+
+```shell
+mise exec -- just poc::ytdrs
+```
+
+If Deno was installed via the official installer instead of mise, add `$HOME/.deno/bin` to `PATH` (secondary; this repo uses mise).
 
 Optional overrides:
 
