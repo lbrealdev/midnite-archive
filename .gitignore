@@ -141,6 +141,7 @@ test.txt
 # Directories
 **/lists/
 **/videos/
+/test/
 docs_**
 
 # IDEs and editors
