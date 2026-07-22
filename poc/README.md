@@ -28,7 +28,7 @@ eval "$(mise activate bash)"   # use zsh/fish equivalent if needed
 
 just poc::build
 just poc::ytdrs
-just poc::boul2gom
+just poc::ytdlp
 POC_VIDEO_URL='https://...' just poc::ytdrs
 just poc::clean
 ```

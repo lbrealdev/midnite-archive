@@ -11,7 +11,7 @@ Test URL: `https://www.youtube.com/watch?v=jNQXAC9IVRw` (“Me at the zoo”)
 | Env | Result |
 |-----|--------|
 | Cloud agent | Both backends hit YouTube bot-check (`Sign in to confirm you’re not a bot`). Compile/API/size metrics still stand. |
-| Local maintainer | **`just poc::ytdrs` full success** (metadata + download + description sidecar + progress). **`just poc::boul2gom`** metadata OK, then reported `download_ok` with `progress_events=0` / `elapsed_ms=0` and empty `out/` → recipe failed. |
+| Local maintainer | **`just poc::ytdrs` full success** (metadata + download + description sidecar + progress). **`just poc::ytdlp`** metadata OK, then reported `download_ok` with `progress_events=0` / `elapsed_ms=0` and empty `out/` → recipe failed. |
 
 ## Matrix
 
@@ -72,7 +72,7 @@ export PATH="$HOME/.local/bin:$HOME/.deno/bin:$PATH"
 
 just poc::build
 just poc::ytdrs
-just poc::boul2gom
+just poc::ytdlp
 just poc::clean
 ```
 

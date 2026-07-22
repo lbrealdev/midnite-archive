@@ -11,8 +11,8 @@ video_url := env("POC_VIDEO_URL", "https://www.youtube.com/watch?v=jNQXAC9IVRw")
 @ytdrs *args:
     POC_OUT=ytd-rs/out cargo run --release --manifest-path ytd-rs/Cargo.toml -- {{ if args == "" { video_url } else { args } }}
 
-# Run boul2gom PoC (manages libs under boul2gom/libs)
-@boul2gom *args:
+# Run yt-dlp (rs) PoC (manages libs under boul2gom/libs)
+@ytdlp *args:
     POC_OUT=boul2gom/out POC_LIBS=boul2gom/libs cargo run --release --manifest-path boul2gom/Cargo.toml -- {{ if args == "" { video_url } else { args } }}
 
 # Remove PoC build artifacts and download dirs

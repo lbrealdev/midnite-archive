@@ -84,7 +84,7 @@ just mise-upgrade-dry  # Preview local mise.toml tool upgrades
 just mise-upgrade      # Apply local mise.toml tool upgrades
 just poc::build        # Build yt-dlp wrapper PoCs
 just poc::ytdrs        # Run ytd-rs PoC
-just poc::boul2gom     # Run boul2gom/yt-dlp PoC
+just poc::ytdlp        # Run yt-dlp (rs) PoC
 just poc::clean        # Clean PoC build and download dirs
 ```
 
