@@ -8,7 +8,7 @@ command reimplementation.
 | Crate | Wrapper | Manifest |
 |-------|---------|----------|
 | `poc/ytd-rs` | [`ytd-rs`](https://crates.io/crates/ytd-rs) | `poc/ytd-rs/Cargo.toml` |
-| `poc/boul2gom` | [`yt-dlp` / boul2gom](https://crates.io/crates/yt-dlp) | `poc/boul2gom/Cargo.toml` |
+| `poc/boul2gom` | [`yt-dlp (rs)`](https://crates.io/crates/yt-dlp) | `poc/boul2gom/Cargo.toml` |
 
 ## Prerequisites
 
@@ -65,3 +65,12 @@ See [RESULTS.md](RESULTS.md).
 **Decision:** prefer `ytd-rs` for production integration (smaller binary, raw
 yt-dlp args + EJS/Deno, MIT). Local `just poc::ytdrs` succeeded; `boul2gom`
 reported a false download success with an empty output dir.
+
+## References
+
+- [ytd-rs](https://crates.io/crates/ytd-rs)
+- [ytd-rs (source)](https://github.com/narrrl/ytd-rs)
+- [yt-dlp (rs)](https://crates.io/crates/yt-dlp)
+- [yt-dlp (rs) (source)](https://github.com/boul2gom/yt-dlp)
+- [yt-dlp](https://github.com/yt-dlp/yt-dlp)
+- [Deno](https://github.com/denoland/deno)
