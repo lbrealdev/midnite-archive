@@ -54,6 +54,12 @@ Test URL: `https://www.youtube.com/watch?v=jNQXAC9IVRw` (“Me at the zoo”)
 - Without a documented raw-arg escape hatch in the path we exercised, it is a poor fit for preserving midnite-archive’s exact yt-dlp flags.
 - Local live run showed a false-success path (API returned Ok with no progress and no files). The PoC now fails closed when `out/` is empty.
 
+## Pre-migration baseline
+
+For build/binary/dependency numbers that include the **current** `midnite-archive`
+CLI (not only the PoCs), see [`BASELINE.md`](BASELINE.md). Re-measure that matrix
+after integrating `ytd-rs` into the main crate.
+
 ## Recommendation
 
 **Proceed with `ytd-rs` as the preferred wrapper for the next implementation issue**, behind a midnite-archive-owned backend boundary.

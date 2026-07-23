@@ -60,7 +60,8 @@ POC_OUT=out POC_LIBS=libs cargo run --release --manifest-path poc/boul2gom/Cargo
 
 ## Metrics
 
-See [RESULTS.md](RESULTS.md).
+- [RESULTS.md](RESULTS.md) — wrapper bake-off (feature fit, live download, license)
+- [BASELINE.md](BASELINE.md) — pre-migration build/binary baseline vs current `midnite-archive`
 
 **Decision:** prefer `ytd-rs` for production integration (smaller binary, raw
 yt-dlp args + EJS/Deno, MIT). Local `just poc::ytdrs` succeeded; `boul2gom`
