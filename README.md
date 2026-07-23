@@ -93,7 +93,7 @@ just poc::clean        # Clean PoC build and download dirs
 - [Requirements](docs/requirements.md) - Setup and installation guide
 - [CLI UX Spec](docs/cli-ux.md) - Output contract, paths, and command summaries
 - [yt-dlp Rust Integration](docs/yt-dlp-integration.md) - Wrapper options and migration criteria
-- [yt-dlp wrapper PoC](poc/README.md) - Side-by-side example crates and [results](poc/RESULTS.md)
+- [yt-dlp wrapper PoC](poc/README.md) - Side-by-side example crates, [results](poc/RESULTS.md), and [pre-migration baseline](poc/BASELINE.md)
 - [Troubleshooting](docs/troubleshooting.md) - Common issues and solutions
 - [Processing Comments](docs/processing-comments.md) - YouTube comment data extraction
 - [tmux](docs/tmux.md) - Running long downloads in background

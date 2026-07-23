@@ -112,6 +112,10 @@ Decision: **use `ytd-rs`**. Local maintainer run confirmed full download + EJS/D
 progress. See [`poc/RESULTS.md`](../poc/RESULTS.md). `boul2gom/yt-dlp` 2.7.x
 currently fails crates.io resolution (`lofty` yanked); PoC used `=2.1.0`.
 
+**Pre-migration baseline (2026-07-23):** compile time, binary size, and dependency
+weight for current `midnite-archive` vs both PoCs are recorded in
+[`poc/BASELINE.md`](../poc/BASELINE.md). Re-run after the production adapter lands.
+
 Do not expose `ytd-rs` types from the CLI or domain modules. Define
 midnite-archive request, result, and progress types, then adapt internally:
 
