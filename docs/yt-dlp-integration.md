@@ -153,6 +153,11 @@ The preferred candidate must demonstrate all of the following before replacing
 9. Confirm the selected crate's license metadata and compatibility before
    merging the dependency.
 
+## Dependency health checks
+
+Use `midnite-archive doctor` to verify system-installed `yt-dlp`, `ffmpeg`, and
+`deno` before running download workflows. See [Troubleshooting](troubleshooting.md).
+
 ## Out of scope
 
 - Replacing yt-dlp's extractors with a pure-Rust YouTube implementation.

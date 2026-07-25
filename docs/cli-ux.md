@@ -125,6 +125,35 @@ With `-v`, expect list parsing and per-video previews as `INFO` lines.
 - Dry-run prints a source → renamed table on stdout without modifying files.
 - Default extensions are `mkv`, `mp4`, `webm`, and `description`.
 
+### `doctor`
+
+**Input:** none.
+
+**Default success (stdout):**
+
+```text
+midnite-archive doctor
+
+tools:
+  yt-dlp:
+    status:  ok
+    version: 2026.07.04
+    path:    /path/to/yt-dlp
+  ffmpeg:
+    status:  ok
+    version: 6.1.1
+    path:    /path/to/ffmpeg
+  deno:
+    status:  ok
+    version: 2.1.4
+    path:    /path/to/deno
+    note:    needed for download
+```
+
+Section headers are bold when stdout is a TTY. Failing checks print
+`status: FAIL`, `error`, and `hint` lines; the process exits `1`.
+With `-v`, probe details also appear as `INFO` lines.
+
 ## Error shape
 
 ```text

@@ -10,7 +10,14 @@ Uses yt-dlp with External JavaScript (EJS) support for reliable downloads despit
 
 - [Rust](https://rustup.rs/) (latest stable)
 - [yt-dlp](https://github.com/yt-dlp/yt-dlp)
-- [deno](https://deno.land/)
+- [ffmpeg](https://ffmpeg.org/)
+- [deno](https://deno.land/) (required for `download` / EJS)
+
+Verify with:
+
+```shell
+midnite-archive doctor
+```
 
 ### Build
 
@@ -34,6 +41,7 @@ midnite-archive <COMMAND>
 | `download <input>`     | Download videos from list file or URL       |
 | `comments <list-file>` | Download comments from video list           |
 | `rename <directory>`   | Rename video files (sanitize special chars) |
+| `doctor`               | Check yt-dlp / ffmpeg / deno on PATH        |
 
 ### Examples
 
@@ -58,6 +66,9 @@ midnite-archive rename -d severo12/videos
 
 # Apply renames
 midnite-archive rename severo12/videos
+
+# Check external tools
+midnite-archive doctor
 ```
 
 ### Rename Options
