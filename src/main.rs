@@ -56,6 +56,10 @@ fn run() -> Result<()> {
             );
             midnite_archive::cli::rename(&directory, recursive, dry_run, &extensions)?;
         }
+        Commands::Doctor => {
+            tracing::debug!("Executing doctor command");
+            midnite_archive::cli::doctor()?;
+        }
     }
 
     tracing::info!("midnite-archive completed successfully");

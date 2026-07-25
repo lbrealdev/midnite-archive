@@ -1,5 +1,19 @@
 # Troubleshooting
 
+## Missing tools (yt-dlp / deno / ffmpeg)
+
+Run the doctor command first:
+
+```shell
+midnite-archive doctor
+```
+
+It checks that `yt-dlp`, `ffmpeg`, and `deno` resolve on `PATH` and prints versions.
+Exit status is non-zero if any check fails. Deno is required for `download` (EJS /
+`--js-runtimes`); yt-dlp and ffmpeg are required for media workflows.
+
+Install hints are printed next to failing checks. Re-run `doctor` after installing.
+
 ## VLC
 
 If the video start with sound but black screen, check the codec:

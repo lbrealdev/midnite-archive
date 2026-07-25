@@ -1,19 +1,137 @@
 use crate::types::{Channel, Video, VideoId};
 use anyhow::{Context, Result, bail};
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::process::Command;
 
+/// Result of probing an external tool on PATH.
+#[derive(Debug, Clone)]
+pub struct ToolProbe {
+    pub name: &'static str,
+    pub ok: bool,
+    pub version: Option<String>,
+    pub path: Option<PathBuf>,
+    pub error: Option<String>,
+}
+
+/// Probe a tool: resolve PATH, run version args, capture first version-ish line.
+pub fn probe_tool(name: &'static str, version_args: &[&str]) -> ToolProbe {
+    let path = which::which(name).ok();
+
+    let Some(resolved) = path.as_ref() else {
+        return ToolProbe {
+            name,
+            ok: false,
+            version: None,
+            path: None,
+            error: Some(format!("{name} not found on PATH")),
+        };
+    };
+
+    match Command::new(resolved).args(version_args).output() {
+        Ok(output) if output.status.success() => {
+            let stdout = String::from_utf8_lossy(&output.stdout);
+            let stderr = String::from_utf8_lossy(&output.stderr);
+            let version = extract_version_line(&stdout).or_else(|| extract_version_line(&stderr));
+            ToolProbe {
+                name,
+                ok: true,
+                version,
+                path: Some(resolved.clone()),
+                error: None,
+            }
+        }
+        Ok(output) => {
+            let stderr = String::from_utf8_lossy(&output.stderr).trim().to_string();
+            ToolProbe {
+                name,
+                ok: false,
+                version: None,
+                path: Some(resolved.clone()),
+                error: Some(if stderr.is_empty() {
+                    format!("{name} exited with status {:?}", output.status.code())
+                } else {
+                    stderr
+                }),
+            }
+        }
+        Err(e) => ToolProbe {
+            name,
+            ok: false,
+            version: None,
+            path: Some(resolved.clone()),
+            error: Some(e.to_string()),
+        },
+    }
+}
+
+fn extract_version_line(text: &str) -> Option<String> {
+    text.lines()
+        .map(str::trim)
+        .find(|line| !line.is_empty())
+        .map(|line| {
+            // Prefer a compact token when the first line is like "yt-dlp 2026.01.01"
+            // or "ffmpeg version 6.1.1 Copyright ..."
+            if let Some(rest) = line.strip_prefix("ffmpeg version ") {
+                rest.split_whitespace().next().unwrap_or(rest).to_string()
+            } else if let Some((_, ver)) = line.split_once(' ') {
+                // "deno 2.1.4 (stable, ...)" or "yt-dlp 2026.x.x"
+                ver.split_whitespace()
+                    .next()
+                    .unwrap_or(ver)
+                    .trim_end_matches(',')
+                    .to_string()
+            } else {
+                line.to_string()
+            }
+        })
+}
+
+pub fn probe_yt_dlp() -> ToolProbe {
+    probe_tool("yt-dlp", &["--version"])
+}
+
+pub fn probe_deno() -> ToolProbe {
+    probe_tool("deno", &["--version"])
+}
+
+pub fn probe_ffmpeg() -> ToolProbe {
+    // ffmpeg uses -version (single dash)
+    probe_tool("ffmpeg", &["-version"])
+}
+
 pub fn check_available() -> Result<()> {
-    match Command::new("yt-dlp").arg("--version").output() {
-        Ok(output) if output.status.success() => Ok(()),
-        _ => bail!("yt-dlp not found. Please install it first."),
+    let probe = probe_yt_dlp();
+    if probe.ok {
+        Ok(())
+    } else {
+        bail!(
+            "yt-dlp not found. Please install it first.{}",
+            probe.error.map(|e| format!(" ({e})")).unwrap_or_default()
+        );
     }
 }
 
 pub fn check_deno_available() -> Result<()> {
-    match Command::new("deno").arg("--version").output() {
-        Ok(output) if output.status.success() => Ok(()),
-        _ => bail!("deno not found. Please install it first."),
+    let probe = probe_deno();
+    if probe.ok {
+        Ok(())
+    } else {
+        bail!(
+            "deno not found. Please install it first.{}",
+            probe.error.map(|e| format!(" ({e})")).unwrap_or_default()
+        );
+    }
+}
+
+pub fn check_ffmpeg_available() -> Result<()> {
+    let probe = probe_ffmpeg();
+    if probe.ok {
+        Ok(())
+    } else {
+        bail!(
+            "ffmpeg not found. Please install it first.{}",
+            probe.error.map(|e| format!(" ({e})")).unwrap_or_default()
+        );
     }
 }
 
@@ -220,4 +338,33 @@ pub fn download_comments_for_video(video: &Video, output_dir: &Path) -> Result<(
     }
 
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn extract_version_line_plain() {
+        assert_eq!(
+            extract_version_line("2026.01.01\n"),
+            Some("2026.01.01".into())
+        );
+    }
+
+    #[test]
+    fn extract_version_line_deno() {
+        assert_eq!(
+            extract_version_line("deno 2.1.4 (stable, release, x86_64-unknown-linux-gnu)\n"),
+            Some("2.1.4".into())
+        );
+    }
+
+    #[test]
+    fn extract_version_line_ffmpeg() {
+        assert_eq!(
+            extract_version_line("ffmpeg version 6.1.1 Copyright (c) 2000-2023\n"),
+            Some("6.1.1".into())
+        );
+    }
 }

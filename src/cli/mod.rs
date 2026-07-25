@@ -1,9 +1,11 @@
 mod comments;
+mod doctor;
 mod download;
 mod generate;
 mod rename;
 
 pub use comments::execute as comments;
+pub use doctor::execute as doctor;
 pub use download::execute as download;
 pub use generate::execute as generate;
 pub use rename::execute as rename;
@@ -56,6 +58,8 @@ pub enum Commands {
         #[arg(short = 'e', long, default_values = ["mkv", "mp4", "webm", "description"])]
         extensions: Vec<String>,
     },
+    /// Check that required external tools are installed and on PATH
+    Doctor,
 }
 
 const ABOUT: &str = "Midnite Archive CLI";
