@@ -31,8 +31,22 @@ Test URL: `https://www.youtube.com/watch?v=jNQXAC9IVRw` (“Me at the zoo”)
 | Live YouTube fetch (cloud) | blocked (bot check) | blocked (bot check) |
 | Live YouTube fetch (local) | **pass** (full download) | **fail** (claimed success, empty out) |
 | License (repo file) | MIT (`LICENSE`) | GPL-3.0-only |
-| License (crates.io metadata) | `unknown` | `GPL-3.0-only` |
+| License (crates.io metadata) | `non-standard` / `unknown` (uses `license-file`) | `GPL-3.0-only` |
 | Latest crates.io usability | ok | **2.7.x fails resolve** (`lofty` 0.23.2/0.23.3 yanked); PoC pinned `=2.1.0` |
+
+## License decision (`ytd-rs` 0.2.1) — 2026-07-25
+
+Issue: [#65](https://github.com/lbrealdev/midnite-archive/issues/65)
+
+Re-checked crates.io + the published `0.2.1` crate tarball:
+
+- `LICENSE` inside the crate is standard MIT (`Copyright (c) 2021 Nils`).
+- `Cargo.toml` uses `license-file = "LICENSE"` rather than SPDX `license = "MIT"`,
+  which is why crates.io / `cargo info` report `non-standard` / `unknown`.
+- **Approved for production dependency adoption.** Metadata mismatch is cosmetic;
+  optional upstream fix is to publish with `license = "MIT"`.
+
+See also [`docs/yt-dlp-integration.md`](../docs/yt-dlp-integration.md#license-decision-ytd-rs-021).
 
 ## Notes
 
@@ -43,7 +57,7 @@ Test URL: `https://www.youtube.com/watch?v=jNQXAC9IVRw` (“Me at the zoo”)
 - Progress is raw stdout lines — fine for CLI/TUI after light parsing.
 - Local run confirmed EJS/Deno + `--write-description` + real download output.
 - Does not manage binaries; Linux/macOS/Windows packaging must install yt-dlp/ffmpeg (and Deno for EJS) separately.
-- Clarify crates.io license metadata with upstream (repo LICENSE is MIT).
+- License: MIT confirmed in published crate; crates.io `unknown` is `license-file` metadata only (#65 closed with adopt decision).
 
 ### `boul2gom/yt-dlp`
 
