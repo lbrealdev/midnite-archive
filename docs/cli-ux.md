@@ -133,12 +133,25 @@ With `-v`, expect list parsing and per-video previews as `INFO` lines.
 
 ```text
 midnite-archive doctor
-  yt-dlp   ok    2026.01.01  (/path/to/yt-dlp)
-  ffmpeg   ok    6.1.1       (/path/to/ffmpeg)
-  deno     ok    2.1.4       (/path/to/deno)  (needed for download)
+
+tools:
+  yt-dlp:
+    status:  ok
+    version: 2026.07.04
+    path:    /path/to/yt-dlp
+  ffmpeg:
+    status:  ok
+    version: 6.1.1
+    path:    /path/to/ffmpeg
+  deno:
+    status:  ok
+    version: 2.1.4
+    path:    /path/to/deno
+    note:    needed for download
 ```
 
-Failing checks print `FAIL`, an install hint, and the process exits `1`.
+Section headers are bold when stdout is a TTY. Failing checks print
+`status: FAIL`, `error`, and `hint` lines; the process exits `1`.
 With `-v`, probe details also appear as `INFO` lines.
 
 ## Error shape
