@@ -58,9 +58,9 @@ selection.
 - Crate: <https://crates.io/crates/ytd-rs>
 - Source: <https://github.com/narrrl/ytd-rs>
 - Reviewed version: `0.2.1`
-- License: repository README states `MIT`; crates.io reports the license field
-  as non-standard, so package metadata should be clarified upstream before
-  adoption.
+- License: **MIT** (see [License decision](#license-decision-ytd-rs-021) below).
+  crates.io still shows `non-standard` / `unknown` because the crate uses
+  `license-file = "LICENSE"` instead of SPDX `license = "MIT"`.
 
 A smaller asynchronous wrapper with a builder API, structured metadata, custom
 yt-dlp argument passthrough, line-by-line process output, and binary streaming.
@@ -71,8 +71,8 @@ yt-dlp must already be available on `PATH`.
 - Custom arguments preserve access to all current yt-dlp features.
 - Streaming process output is a direct path to CLI and TUI progress events.
 - Small API and dependency footprint.
-- MIT terms are compatible with a permissively licensed midnite-archive, once
-  the crates.io metadata discrepancy is resolved.
+- MIT terms are compatible with midnite-archive distribution (confirmed;
+  crates.io metadata discrepancy is cosmetic — see License decision).
 - Keeps dependency installation separate from download orchestration.
 
 **Concerns**
@@ -96,8 +96,33 @@ yt-dlp must already be available on `PATH`.
 | Progress foundation | Typed hooks | Streamed output lines |
 | Installs yt-dlp/ffmpeg | Yes | No |
 | Current archive/comments parity | Must be proven | Likely via custom args; must be proven |
-| License impact | Requires GPL-compatible project distribution | MIT stated upstream; metadata needs confirmation |
+| License impact | Requires GPL-compatible project distribution | MIT terms confirmed; crates.io metadata cosmetic only |
 | Integration size | Larger, opinionated API | Smaller wrapper |
+
+## License decision (`ytd-rs` 0.2.1)
+
+Issue: [#65](https://github.com/lbrealdev/midnite-archive/issues/65)  
+Checked: 2026-07-25
+
+| Source | Finding |
+|--------|---------|
+| Upstream [`LICENSE`](https://github.com/narrrl/ytd-rs/blob/main/LICENSE) | Standard MIT text (`Copyright (c) 2021 Nils`) |
+| Published crate `ytd-rs` 0.2.1 tarball | Includes `LICENSE` (same MIT text) |
+| Upstream / crate `Cargo.toml` | `license-file = "LICENSE"` (no SPDX `license` field) |
+| crates.io API / `cargo info` | License reported as `non-standard` / `unknown` |
+
+**Decision: approve `ytd-rs` 0.2.1 for production adoption from a licensing
+perspective.** MIT terms are compatible with midnite-archive distribution. The
+crates.io `unknown` / `non-standard` label is a metadata packaging issue, not a
+rights issue: Cargo treats `license-file` as a non-SPDX custom license for
+registry display even when the file is MIT.
+
+**Upstream follow-up (optional, non-blocking):** ask
+[narrrl/ytd-rs](https://github.com/narrrl/ytd-rs) to set `license = "MIT"` (and
+keep or drop `license-file`) so crates.io shows SPDX MIT. Do not block `#66` on
+that change.
+
+Spike criterion #9 is satisfied by this decision.
 
 ## Recommendation
 
@@ -151,7 +176,8 @@ The preferred candidate must demonstrate all of the following before replacing
 8. Work with externally installed yt-dlp/ffmpeg on Linux, with a documented
    path for macOS and Windows packaging.
 9. Confirm the selected crate's license metadata and compatibility before
-   merging the dependency.
+   merging the dependency. **Done (2026-07-25):** MIT confirmed; see
+   [License decision](#license-decision-ytd-rs-021).
 
 ## Dependency health checks
 
