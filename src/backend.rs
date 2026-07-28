@@ -191,9 +191,15 @@ impl YtDlpBackend for YtdRsBackend {
             .unwrap_or("archive");
         let archive_file = prepare_archive_file(output_dir, &format!("{archive_name}.archive"))?;
 
-        // No positional URL: yt-dlp reads URLs from `-a <list_file>`.
-        let ytd = build_download_builder("", &deno_path, &archive_file, output_dir)
-            .arg_with("-a", list_file.to_string_lossy().to_string());
+        // yt-dlp reads URLs from `-a <list_file>`; start with an empty link list
+        // (not YtDlp::new("")) so we never pass a spurious empty positional URL.
+        let ytd = apply_download_args(
+            YtDlp::new_multiple(Vec::new()),
+            &deno_path,
+            &archive_file,
+            output_dir,
+        )
+        .arg_with("-a", list_file.to_string_lossy().to_string());
         ytd.download()
             .await
             .with_context(|| format!("Failed to run yt-dlp for file: {:?}", list_file))?;
@@ -246,8 +252,16 @@ fn build_download_builder(
     archive_file: &Path,
     output_dir: &Path,
 ) -> YtDlp {
-    YtDlp::new(url)
-        .arg("-cw")
+    apply_download_args(YtDlp::new(url), deno_path, archive_file, output_dir)
+}
+
+fn apply_download_args(
+    ytd: YtDlp,
+    deno_path: &Path,
+    archive_file: &Path,
+    output_dir: &Path,
+) -> YtDlp {
+    ytd.arg("-cw")
         .arg_with("-o", "%(title)s-%(id)s.%(ext)s")
         .arg("--embed-thumbnail")
         .arg("--write-description")
@@ -270,14 +284,8 @@ fn build_download_builder(
 mod tests {
     use super::*;
 
-    #[test]
-    fn backends_are_object_safe() {
-        let backends: Vec<Box<dyn YtDlpBackend>> = vec![
-            Box::new(CommandBackend),
-            Box::new(YtdRsBackend::new()),
-        ];
-        assert_eq!(backends.len(), 2);
-    }
+    // Object-safety is asserted at compile time by boxing as `dyn YtDlpBackend`
+    // in the construction tests below.
 
     #[test]
     fn command_backend_default_constructs() {

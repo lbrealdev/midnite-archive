@@ -348,6 +348,11 @@ pub fn download_comments_for_video(video: &Video, output_dir: &Path) -> Result<(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::types::ChannelName;
+
+    fn test_channel() -> Channel {
+        Channel::new(ChannelName::new("testchannel").unwrap())
+    }
 
     #[test]
     fn extract_version_line_plain() {
@@ -371,5 +376,79 @@ mod tests {
             extract_version_line("ffmpeg version 6.1.1 Copyright (c) 2000-2023\n"),
             Some("6.1.1".into())
         );
+    }
+
+    #[test]
+    fn parse_channel_list_normal_hyphenated_titles() {
+        let channel = test_channel();
+        let stdout = "\
+My Cool Video-dQw4w9WgXcQ
+Foo-Bar-Baz-abcdefghijk
+Simple Title-xxxxxxxxxxx
+";
+        let videos = parse_channel_list_output(stdout, &channel);
+        assert_eq!(videos.len(), 3);
+        assert_eq!(videos[0].title, "My Cool Video");
+        assert_eq!(videos[0].id.to_string(), "dQw4w9WgXcQ");
+        assert_eq!(videos[1].title, "Foo-Bar-Baz");
+        assert_eq!(videos[1].id.to_string(), "abcdefghijk");
+        assert_eq!(videos[2].title, "Simple Title");
+        assert_eq!(videos[2].id.to_string(), "xxxxxxxxxxx");
+        assert_eq!(videos[0].channel, channel);
+    }
+
+    #[test]
+    fn parse_channel_list_short_lines_are_skipped() {
+        let channel = test_channel();
+        // Fewer than 12 chars total (need title + hyphen + 11-char ID).
+        let stdout = "\
+short
+a-bcdefghij
+title-only
+ok-dQw4w9WgXcQ
+";
+        let videos = parse_channel_list_output(stdout, &channel);
+        assert_eq!(videos.len(), 1);
+        assert_eq!(videos[0].title, "ok");
+        assert_eq!(videos[0].id.to_string(), "dQw4w9WgXcQ");
+    }
+
+    #[test]
+    fn parse_channel_list_invalid_video_ids_are_skipped() {
+        let channel = test_channel();
+        // 11 trailing chars but not a valid YouTube ID (invalid characters).
+        let stdout = "\
+Bad Chars-!!!!!!!!!!!
+Spaces ID-aaaa bbbbb
+Good One-dQw4w9WgXcQ
+";
+        let videos = parse_channel_list_output(stdout, &channel);
+        assert_eq!(videos.len(), 1);
+        assert_eq!(videos[0].title, "Good One");
+        assert_eq!(videos[0].id.to_string(), "dQw4w9WgXcQ");
+    }
+
+    #[test]
+    fn parse_channel_list_empty_input() {
+        let channel = test_channel();
+        assert!(parse_channel_list_output("", &channel).is_empty());
+        assert!(parse_channel_list_output("\n\n\n", &channel).is_empty());
+    }
+
+    #[test]
+    fn parse_channel_list_whitespace_lines() {
+        let channel = test_channel();
+        let stdout = "\
+   \t  
+  Spaced Title-dQw4w9WgXcQ  
+\tAnother-abcdefghijk\t
+   \n
+";
+        let videos = parse_channel_list_output(stdout, &channel);
+        assert_eq!(videos.len(), 2);
+        assert_eq!(videos[0].title, "Spaced Title");
+        assert_eq!(videos[0].id.to_string(), "dQw4w9WgXcQ");
+        assert_eq!(videos[1].title, "Another");
+        assert_eq!(videos[1].id.to_string(), "abcdefghijk");
     }
 }
