@@ -22,7 +22,7 @@ fn setup_logging(verbose: u8) {
         .init();
 }
 
-async fn run() -> Result<()> {
+fn run() -> Result<()> {
     let cli = Cli::parse();
 
     setup_logging(cli.verbose);
@@ -66,9 +66,8 @@ async fn run() -> Result<()> {
     Ok(())
 }
 
-#[tokio::main]
-async fn main() {
-    if let Err(e) = run().await {
+fn main() {
+    if let Err(e) = run() {
         tracing::error!("Application error: {}", e);
         eprintln!("Error: {}", e);
         process::exit(1);

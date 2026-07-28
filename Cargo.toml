@@ -4,19 +4,24 @@ version = "0.2.0"
 edition = "2024"
 rust-version = "1.85"
 
+[features]
+default = []
+# Async ytd-rs adapter + Tokio OnceLock runtime. Default remains the Command path.
+ytd-rs-backend = ["dep:ytd-rs", "dep:tokio", "dep:async-trait"]
+
 [dependencies]
 anyhow = "1.0.102"
-async-trait = "0.1"
+async-trait = { version = "0.1", optional = true }
 chrono = "0.4"
 clap = { version = "4.6", features = ["derive"] }
 comfy-table = "7.1"
 regex = "1.12.3"
-tokio = { version = "1", features = ["rt-multi-thread", "macros"] }
+tokio = { version = "1", features = ["rt", "macros"], optional = true }
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 walkdir = "2.5"
 which = "8.0"
-ytd-rs = "0.2.1"
+ytd-rs = { version = "0.2.1", optional = true }
 
 [dev-dependencies]
 tempfile = "3.10"

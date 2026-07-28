@@ -1,3 +1,4 @@
+use crate::backend::list_archive_path;
 use crate::types::ListFile;
 use crate::yt_dlp;
 use anyhow::{Context, Result, bail};
@@ -95,15 +96,7 @@ fn handle_file_download(input: &str) -> Result<()> {
     };
 
     // Check archive file for download tracking stats
-    let archive_file = download_dir
-        .join(".archive")
-        .join(
-            list_file
-                .path
-                .file_stem()
-                .unwrap_or(std::ffi::OsStr::new("archive")),
-        )
-        .with_extension("archive");
+    let archive_file = list_archive_path(&download_dir, &list_file.path);
 
     let downloaded_count = if archive_file.exists() {
         match std::fs::read_to_string(&archive_file) {

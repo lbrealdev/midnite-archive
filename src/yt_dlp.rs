@@ -1,7 +1,27 @@
 use crate::types::{Channel, Video, VideoId};
-use anyhow::{Context, Result, bail};
+use anyhow::{Result, bail};
 use std::path::{Path, PathBuf};
 use std::process::Command;
+
+#[cfg(feature = "ytd-rs-backend")]
+use crate::backend::{YtDlpBackend, YtdRsBackend};
+#[cfg(not(feature = "ytd-rs-backend"))]
+use crate::backend;
+
+/// Process-wide current-thread Tokio runtime for the sync facade.
+///
+/// Only used when `ytd-rs-backend` is enabled. Never call `block_on` from
+/// inside an async context (it panics).
+#[cfg(feature = "ytd-rs-backend")]
+fn runtime() -> &'static tokio::runtime::Runtime {
+    static RT: std::sync::OnceLock<tokio::runtime::Runtime> = std::sync::OnceLock::new();
+    RT.get_or_init(|| {
+        tokio::runtime::Builder::new_current_thread()
+            .enable_all()
+            .build()
+            .expect("failed to create Tokio runtime")
+    })
+}
 
 /// Result of probing an external tool on PATH.
 #[derive(Debug, Clone)]
@@ -135,45 +155,20 @@ pub fn check_ffmpeg_available() -> Result<()> {
     }
 }
 
-/// Generate a channel list and return structured Video data
+/// Generate a channel list and return structured Video data.
 pub fn generate_channel_list(
     channel: &Channel,
     output_file: &Path,
     filter: Option<&str>,
 ) -> Result<Vec<Video>> {
-    let channel_url = channel.url();
-
-    // Build command with optional filter
-    let mut cmd = Command::new("yt-dlp");
-    cmd.args(["--flat-playlist", "--print", "%(title)s-%(id)s"]);
-
-    // Add match-filter if provided
-    if let Some(pattern) = filter {
-        cmd.args(["--match-title", pattern]);
+    #[cfg(feature = "ytd-rs-backend")]
+    {
+        runtime().block_on(YtdRsBackend.generate_channel_list(channel, output_file, filter))
     }
-
-    let output = cmd
-        .arg(&channel_url)
-        .output()
-        .with_context(|| format!("Failed to run yt-dlp for channel: {}", channel.name))?;
-
-    if !output.status.success() {
-        let stderr = String::from_utf8_lossy(&output.stderr);
-        bail!(
-            "yt-dlp failed with exit code: {:?}\n{}",
-            output.status.code(),
-            stderr
-        );
+    #[cfg(not(feature = "ytd-rs-backend"))]
+    {
+        backend::command::generate_channel_list(channel, output_file, filter)
     }
-
-    let stdout = String::from_utf8_lossy(&output.stdout);
-    let videos = parse_channel_list_output(&stdout, channel);
-
-    // Also write to file for backward compatibility
-    std::fs::write(output_file, &output.stdout)
-        .with_context(|| format!("Failed to write output file: {:?}", output_file))?;
-
-    Ok(videos)
 }
 
 /// Parse yt-dlp `--flat-playlist --print "%(title)s-%(id)s"` output into Videos.
@@ -215,134 +210,58 @@ pub fn parse_channel_list_output(stdout: &str, channel: &Channel) -> Vec<Video> 
 }
 
 pub fn download_from_url(url: &str, output_dir: &Path) -> Result<()> {
-    let deno_path = which::which("deno").context("Failed to find deno executable path")?;
-
-    // Create archive path for single URL downloads: <output_dir>/.archive/downloads.archive
-    let archive_dir = output_dir.join(".archive");
-    if let Err(e) = std::fs::create_dir_all(&archive_dir) {
-        tracing::warn!("Failed to create archive directory: {}", e);
+    #[cfg(feature = "ytd-rs-backend")]
+    {
+        runtime().block_on(YtdRsBackend.download_from_url(url, output_dir))
     }
-
-    let archive_file = archive_dir.join("downloads.archive");
-    tracing::info!("Using download archive: {}", archive_file.display());
-
-    let status = Command::new("yt-dlp")
-        .args([
-            "-cw",
-            "-o",
-            "%(title)s-%(id)s.%(ext)s",
-            "--embed-thumbnail",
-            "--write-description",
-            "--embed-metadata",
-            "--no-colors",
-            "--remote-components",
-            "ejs:npm",
-            "--js-runtimes",
-        ])
-        .arg(format!("deno:{}", deno_path.display()))
-        .arg("--download-archive")
-        .arg(&archive_file)
-        .args(["-P", &output_dir.to_string_lossy()])
-        .arg(url)
-        .status()
-        .with_context(|| format!("Failed to run yt-dlp for URL: {}", url))?;
-
-    if !status.success() {
-        bail!("yt-dlp download failed with exit code: {:?}", status.code());
+    #[cfg(not(feature = "ytd-rs-backend"))]
+    {
+        backend::command::download_from_url(url, output_dir)
     }
-
-    Ok(())
 }
 
 pub fn download_from_file(
     list_file: &Path,
     output_dir: &Path,
-    _total_videos: usize,
-    _downloaded_count: usize,
+    total_videos: usize,
+    downloaded_count: usize,
 ) -> Result<()> {
-    let deno_path = which::which("deno").context("Failed to find deno executable path")?;
-
-    // Create archive path: <channel>/.archive/<list-file-name>.archive
-    let archive_dir = output_dir.join(".archive");
-    if let Err(e) = std::fs::create_dir_all(&archive_dir) {
-        tracing::warn!("Failed to create archive directory: {}", e);
+    #[cfg(feature = "ytd-rs-backend")]
+    {
+        runtime().block_on(YtdRsBackend.download_from_file(
+            list_file,
+            output_dir,
+            total_videos,
+            downloaded_count,
+        ))
     }
-
-    let archive_file = archive_dir
-        .join(
-            list_file
-                .file_stem()
-                .unwrap_or(std::ffi::OsStr::new("archive")),
-        )
-        .with_extension("archive");
-
-    tracing::info!("Using download archive: {}", archive_file.display());
-
-    let status = Command::new("yt-dlp")
-        .args([
-            "-cw",
-            "-o",
-            "%(title)s-%(id)s.%(ext)s",
-            "--embed-thumbnail",
-            "--write-description",
-            "--embed-metadata",
-            "--no-colors",
-            "--remote-components",
-            "ejs:npm",
-            "--js-runtimes",
-        ])
-        .arg(format!("deno:{}", deno_path.display()))
-        .arg("--download-archive")
-        .arg(&archive_file)
-        .args(["-P", &output_dir.to_string_lossy()])
-        .args(["-a", &list_file.to_string_lossy()])
-        .status()
-        .with_context(|| format!("Failed to run yt-dlp for file: {:?}", list_file))?;
-
-    if !status.success() {
-        bail!("yt-dlp download failed with exit code: {:?}", status.code());
+    #[cfg(not(feature = "ytd-rs-backend"))]
+    {
+        backend::command::download_from_file(list_file, output_dir, total_videos, downloaded_count)
     }
-
-    Ok(())
 }
 
 pub fn download_comments(list_file: &Path, output_dir: &Path) -> Result<()> {
-    let status = Command::new("yt-dlp")
-        .args(["-o", "%(id)s.comments.json"])
-        .args(["-P", &output_dir.to_string_lossy()])
-        .args(["-a", &list_file.to_string_lossy()])
-        .args(["--write-comments", "--skip-download", "--no-colors"])
-        .status()
-        .with_context(|| format!("Failed to run yt-dlp for comments: {:?}", list_file))?;
-
-    if !status.success() {
-        bail!(
-            "yt-dlp comments download failed with exit code: {:?}",
-            status.code()
-        );
+    #[cfg(feature = "ytd-rs-backend")]
+    {
+        runtime().block_on(YtdRsBackend.download_comments(list_file, output_dir))
     }
-
-    Ok(())
+    #[cfg(not(feature = "ytd-rs-backend"))]
+    {
+        backend::command::download_comments(list_file, output_dir)
+    }
 }
 
-/// Download comments for a specific video
+/// Download comments for a specific video.
 pub fn download_comments_for_video(video: &Video, output_dir: &Path) -> Result<()> {
-    let status = Command::new("yt-dlp")
-        .args(["-o", "%(id)s.comments.json"])
-        .args(["-P", &output_dir.to_string_lossy()])
-        .args(["--write-comments", "--skip-download", "--no-colors"])
-        .arg(video.url())
-        .status()
-        .with_context(|| format!("Failed to run yt-dlp for video: {}", video.id))?;
-
-    if !status.success() {
-        bail!(
-            "yt-dlp comments download failed with exit code: {:?}",
-            status.code()
-        );
+    #[cfg(feature = "ytd-rs-backend")]
+    {
+        runtime().block_on(YtdRsBackend.download_comments_for_video(video, output_dir))
     }
-
-    Ok(())
+    #[cfg(not(feature = "ytd-rs-backend"))]
+    {
+        backend::command::download_comments_for_video(video, output_dir)
+    }
 }
 
 #[cfg(test)]
