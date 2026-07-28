@@ -310,23 +310,29 @@ impl ListFile {
                 Some(video)
             } else if let Some(video) = Video::from_title_id_string(line) {
                 Some(Video::new(video.id, video.title, self.channel.clone()))
-            } else if let Some(caps) = id_regex.captures(line)
-                && let Ok(id) = VideoId::from_str(&caps[0])
-            {
-                let title = line[..line.len() - caps[0].len()]
-                    .trim_end()
-                    .trim_end_matches('-')
-                    .to_string();
-                Some(Video::new(id, title, self.channel.clone()))
+            } else if let Some(caps) = id_regex.captures(line) {
+                match VideoId::from_str(&caps[0]) {
+                    Ok(id) => {
+                        let title = line[..line.len() - caps[0].len()]
+                            .trim_end()
+                            .trim_end_matches('-')
+                            .to_string();
+                        Some(Video::new(id, title, self.channel.clone()))
+                    }
+                    Err(_) => {
+                        unparseable.push(line.to_string());
+                        None
+                    }
+                }
             } else {
                 unparseable.push(line.to_string());
                 None
             };
 
-            if let Some(video) = video
-                && seen_ids.insert(video.id.clone())
-            {
-                videos.push(video);
+            if let Some(video) = video {
+                if seen_ids.insert(video.id.clone()) {
+                    videos.push(video);
+                }
             }
         }
 
@@ -342,18 +348,18 @@ impl ListFile {
         // Match watch?v= format
         let watch_regex =
             Regex::new(&format!(r"youtube\.com/watch\?v=({VIDEO_ID_PATTERN})")).unwrap();
-        if let Some(caps) = watch_regex.captures(url)
-            && let Ok(id) = VideoId::from_str(&caps[1])
-        {
-            return Some(Video::new(id, "", channel.clone())); // Title unknown
+        if let Some(caps) = watch_regex.captures(url) {
+            if let Ok(id) = VideoId::from_str(&caps[1]) {
+                return Some(Video::new(id, "", channel.clone())); // Title unknown
+            }
         }
 
         // Match youtu.be/ format
         let short_regex = Regex::new(&format!(r"youtu\.be/({VIDEO_ID_PATTERN})")).unwrap();
-        if let Some(caps) = short_regex.captures(url)
-            && let Ok(id) = VideoId::from_str(&caps[1])
-        {
-            return Some(Video::new(id, "", channel.clone())); // Title unknown
+        if let Some(caps) = short_regex.captures(url) {
+            if let Ok(id) = VideoId::from_str(&caps[1]) {
+                return Some(Video::new(id, "", channel.clone())); // Title unknown
+            }
         }
 
         None

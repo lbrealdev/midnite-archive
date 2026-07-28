@@ -79,7 +79,7 @@ jobs:
           toolchain: 1.85.0
 
       - name: Cargo check
-        run: cargo +1.85.0 check
+        run: cargo +1.85.0 check --all-targets
 
       - name: Cargo clippy
-        run: cargo +1.85.0 clippy
+        run: cargo +1.85.0 clippy --all-targets
