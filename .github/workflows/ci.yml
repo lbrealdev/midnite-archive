@@ -74,7 +74,12 @@ jobs:
           persist-credentials: false
 
       - name: Install Rust 1.85
-        run: rustup toolchain install 1.85 --profile minimal --no-self-update
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: 1.85.0
 
-      - name: Build with MSRV
-        run: cargo +1.85 build --release
+      - name: Cargo check
+        run: cargo +1.85.0 check
+
+      - name: Cargo clippy
+        run: cargo +1.85.0 clippy
