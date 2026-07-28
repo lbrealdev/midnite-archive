@@ -166,8 +166,18 @@ pub fn generate_channel_list(
         );
     }
 
-    // Parse output and create structured Video objects
     let stdout = String::from_utf8_lossy(&output.stdout);
+    let videos = parse_channel_list_output(&stdout, channel);
+
+    // Also write to file for backward compatibility
+    std::fs::write(output_file, &output.stdout)
+        .with_context(|| format!("Failed to write output file: {:?}", output_file))?;
+
+    Ok(videos)
+}
+
+/// Parse yt-dlp `--flat-playlist --print "%(title)s-%(id)s"` output into Videos.
+pub fn parse_channel_list_output(stdout: &str, channel: &Channel) -> Vec<Video> {
     let mut videos = Vec::new();
 
     for line in stdout.lines() {
@@ -201,12 +211,7 @@ pub fn generate_channel_list(
     }
 
     tracing::info!("Successfully parsed {} videos from output", videos.len());
-
-    // Also write to file for backward compatibility
-    std::fs::write(output_file, &output.stdout)
-        .with_context(|| format!("Failed to write output file: {:?}", output_file))?;
-
-    Ok(videos)
+    videos
 }
 
 pub fn download_from_url(url: &str, output_dir: &Path) -> Result<()> {
