@@ -14,6 +14,9 @@ use std::ffi::OsStr;
 use std::path::{Path, PathBuf};
 
 pub mod command;
+/// Always compiled so classifier tests run on the default (Command) build.
+/// Public classification API for the ytd-rs adapter and a future TUI.
+pub mod events;
 
 #[cfg(feature = "ytd-rs-backend")]
 pub mod ytdrs;
@@ -77,11 +80,7 @@ pub fn url_archive_path(output_dir: &Path) -> PathBuf {
 pub fn list_archive_path(output_dir: &Path, list_file: &Path) -> PathBuf {
     output_dir
         .join(".archive")
-        .join(
-            list_file
-                .file_stem()
-                .unwrap_or(OsStr::new("archive")),
-        )
+        .join(list_file.file_stem().unwrap_or(OsStr::new("archive")))
         .with_extension("archive")
 }
 

@@ -171,7 +171,12 @@ The preferred candidate must demonstrate all of the following before replacing
 4. Download comments without media.
 5. Pass EJS remote components and the Deno runtime.
 6. Surface cancellation-safe, line-by-line progress suitable for both CLI and
-   future TUI consumers.
+   future TUI consumers. **Partial (2026-08-17):** media downloads stream
+   stdout via `download_process` and classify into midnite `YtDlpEvent`
+   (`-v` via tracing). Programmatic process kill is **not** available:
+   `ytd-rs` 0.2.1 `YtDlpChild` exposes only `next_line` / `wait`, does not
+   kill on drop, and does not drain stderr. TTY SIGINT may still reach
+   yt-dlp via the process group.
 7. Produce actionable errors with subprocess exit status and stderr.
 8. Work with externally installed yt-dlp/ffmpeg on Linux, with a documented
    path for macOS and Windows packaging.
