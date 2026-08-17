@@ -1,10 +1,19 @@
 //! Async backend backed by the `ytd-rs` crate.
 //!
 //! Compiled only with the `ytd-rs-backend` feature.
+//!
+//! Media downloads stream yt-dlp stdout via [`YtDlp::download_process`] and
+//! classify lines into [`crate::backend::events::YtDlpEvent`]. Default CLI
+//! stays quiet (`-v` surfaces progress as `tracing` info).
+//!
+//! **Cancellation:** `ytd-rs` 0.2.1 `YtDlpChild` exposes only `next_line` /
+//! `wait`. There is no public kill/pid API and the child is **not** killed on
+//! drop. TTY SIGINT may still stop yt-dlp via the process group. Programmatic
+//! cancel is blocked on upstream. stderr is piped but unread on this path
+//! (pipe-fill risk; failed `wait()` does not include real stderr).
 
-use crate::backend::{
-    YtDlpBackend, ensure_archive_parent, list_archive_path, url_archive_path,
-};
+use crate::backend::events::{YtDlpEvent, classify_yt_dlp_line};
+use crate::backend::{YtDlpBackend, ensure_archive_parent, list_archive_path, url_archive_path};
 use crate::types::{Channel, Video};
 use crate::yt_dlp::parse_channel_list_output;
 use anyhow::{Context, Result};
@@ -55,7 +64,7 @@ impl YtDlpBackend for YtdRsBackend {
         tracing::info!("Using download archive: {}", archive_file.display());
 
         let ytd = build_download_builder(url, &deno_path, &archive_file, output_dir);
-        ytd.download()
+        run_download_process(ytd)
             .await
             .with_context(|| format!("Failed to run yt-dlp for URL: {}", url))?;
         Ok(())
@@ -83,7 +92,7 @@ impl YtDlpBackend for YtdRsBackend {
             output_dir,
         )
         .arg_with("-a", list_file.to_string_lossy().to_string());
-        ytd.download()
+        run_download_process(ytd)
             .await
             .with_context(|| format!("Failed to run yt-dlp for file: {:?}", list_file))?;
         Ok(())
@@ -117,6 +126,27 @@ impl YtDlpBackend for YtdRsBackend {
     }
 }
 
+/// Stream yt-dlp stdout, classify lines, emit via tracing, then wait.
+async fn run_download_process(ytd: YtDlp) -> Result<()> {
+    let mut child = ytd.download_process().await?;
+    while let Some(line) = child.next_line().await? {
+        match classify_yt_dlp_line(&line) {
+            YtDlpEvent::Progress { raw, percent } => {
+                if let Some(percent) = percent {
+                    tracing::info!(percent, "{}", raw);
+                } else {
+                    tracing::info!("{}", raw);
+                }
+            }
+            YtDlpEvent::Log { raw } => {
+                tracing::debug!("{}", raw);
+            }
+        }
+    }
+    child.wait().await?;
+    Ok(())
+}
+
 /// Shared yt-dlp arg set for the EJS/Deno download flow (url + file variants).
 fn build_download_builder(
     url: &str,
@@ -141,13 +171,33 @@ fn apply_download_args(
         .arg("--no-colors")
         .arg("--remote-components")
         .arg("ejs:npm")
-        .arg_with(
-            "--js-runtimes",
-            format!("deno:{}", deno_path.display()),
-        )
+        .arg_with("--js-runtimes", format!("deno:{}", deno_path.display()))
         .arg_with(
             "--download-archive",
             archive_file.to_string_lossy().to_string(),
         )
         .arg_with("-P", output_dir.to_string_lossy().to_string())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[tokio::test]
+    async fn download_process_streams_version_when_yt_dlp_present() {
+        if which::which("yt-dlp").is_err() {
+            return;
+        }
+        let mut child = YtDlp::new("")
+            .arg("--version")
+            .download_process()
+            .await
+            .expect("download_process --version");
+        let mut lines = Vec::new();
+        while let Some(line) = child.next_line().await.expect("next_line") {
+            lines.push(line);
+        }
+        child.wait().await.expect("wait");
+        assert!(!lines.is_empty(), "expected yt-dlp --version stdout");
+    }
 }

@@ -29,6 +29,9 @@ jobs:
       - name: Run clippy
         run: cargo clippy
 
+      - name: Run clippy (ytd-rs-backend)
+        run: cargo clippy --all-targets --features ytd-rs-backend
+
   test:
     name: Test
     runs-on: ubuntu-latest
@@ -44,6 +47,9 @@ jobs:
 
       - name: Run tests
         run: cargo test
+
+      - name: Run tests (ytd-rs-backend)
+        run: cargo test --features ytd-rs-backend
 
   build:
     name: Build
@@ -84,3 +90,6 @@ jobs:
 
       - name: Cargo clippy
         run: cargo +1.90.0 clippy --all-targets
+
+      - name: Cargo check ytd-rs-backend
+        run: cargo +1.90.0 check --all-targets --features ytd-rs-backend
