@@ -14,6 +14,8 @@ use std::ffi::OsStr;
 use std::path::{Path, PathBuf};
 
 pub mod command;
+/// Always compiled so classifier tests run on the default (Command) build.
+/// Public classification API for the ytd-rs adapter and a future TUI.
 pub mod events;
 
 #[cfg(feature = "ytd-rs-backend")]

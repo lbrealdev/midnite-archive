@@ -12,7 +12,7 @@
 //! cancel is blocked on upstream. stderr is piped but unread on this path
 //! (pipe-fill risk; failed `wait()` does not include real stderr).
 
-use crate::backend::events::{YtDlpEvent, classify_yt_dlp_line};
+use crate::backend::events::classify_and_emit;
 use crate::backend::{YtDlpBackend, ensure_archive_parent, list_archive_path, url_archive_path};
 use crate::types::{Channel, Video};
 use crate::yt_dlp::parse_channel_list_output;
@@ -130,18 +130,7 @@ impl YtDlpBackend for YtdRsBackend {
 async fn run_download_process(ytd: YtDlp) -> Result<()> {
     let mut child = ytd.download_process().await?;
     while let Some(line) = child.next_line().await? {
-        match classify_yt_dlp_line(&line) {
-            YtDlpEvent::Progress { raw, percent } => {
-                if let Some(percent) = percent {
-                    tracing::info!(percent, "{}", raw);
-                } else {
-                    tracing::info!("{}", raw);
-                }
-            }
-            YtDlpEvent::Log { raw } => {
-                tracing::debug!("{}", raw);
-            }
-        }
+        classify_and_emit(&line);
     }
     child.wait().await?;
     Ok(())
@@ -188,7 +177,7 @@ mod tests {
         if which::which("yt-dlp").is_err() {
             return;
         }
-        let mut child = YtDlp::new("")
+        let mut child = YtDlp::new_multiple(Vec::new())
             .arg("--version")
             .download_process()
             .await

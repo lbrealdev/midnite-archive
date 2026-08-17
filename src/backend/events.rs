@@ -38,6 +38,26 @@ fn parse_download_percent(line: &str) -> Option<f32> {
     line[start..end].parse().ok()
 }
 
+/// Classify a stdout line and emit it via `tracing` (`info` for progress, `debug` for log).
+///
+/// Returns the event so the stream loop and unit tests share the same path.
+pub fn classify_and_emit(line: &str) -> YtDlpEvent {
+    let event = classify_yt_dlp_line(line);
+    match &event {
+        YtDlpEvent::Progress { raw, percent } => {
+            if let Some(percent) = percent {
+                tracing::info!(percent, "{}", raw);
+            } else {
+                tracing::info!("{}", raw);
+            }
+        }
+        YtDlpEvent::Log { raw } => {
+            tracing::debug!("{}", raw);
+        }
+    }
+    event
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -89,5 +109,21 @@ mod tests {
                 raw: line.to_string()
             }
         );
+    }
+
+    #[test]
+    fn classify_and_emit_matches_classify_on_fixtures() {
+        let lines = [
+            "[download]  12.3% of 50.00MiB at 1.00MiB/s ETA 00:50",
+            "[download] Destination: foo.mp4",
+            "[download] foo has already been recorded in the archive",
+            "[Merger] Merging formats into \"foo.mp4\"",
+        ];
+        for line in lines {
+            assert_eq!(classify_and_emit(line), classify_yt_dlp_line(line));
+        }
+        let progress = classify_and_emit(lines[0]);
+        let percent = percent_of(&progress).expect("percent");
+        assert!((percent - 12.3).abs() < 1e-4, "percent={percent}");
     }
 }
