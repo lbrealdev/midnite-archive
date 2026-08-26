@@ -539,7 +539,7 @@ mod tests {
         assert!(
             dead,
             "grandchild pid {grandchild} still alive after cancel; \
-             manual: cargo test --features ytd-rs-backend cancel_kills_grandchild -- --nocapture"
+             manual: cargo test cancel_kills_grandchild -- --nocapture"
         );
     }
 
@@ -748,7 +748,10 @@ mod tests {
         let (tx, rx) = oneshot::channel();
         let streaming = run_streaming(
             "/bin/sh",
-            ["-c", "exec >/dev/null 2>&1; while true; do sleep 0.05; done"],
+            [
+                "-c",
+                "exec >/dev/null 2>&1; while true; do sleep 0.05; done",
+            ],
             async {
                 let _ = rx.await;
             },

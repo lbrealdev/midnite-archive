@@ -1,7 +1,5 @@
 //! Async backend backed by the `ytd-rs` crate.
 //!
-//! Compiled only with the `ytd-rs-backend` feature.
-//!
 //! Media downloads stream yt-dlp stdout and stderr via a midnite-owned
 //! [`tokio::process`] runner and classify lines into
 //! [`crate::backend::events::YtDlpEvent`]. Default CLI stays quiet
@@ -99,13 +97,10 @@ impl YtDlpBackend for YtdRsBackend {
     }
 
     async fn download_comments(&self, list_file: &Path, output_dir: &Path) -> Result<()> {
-        let ytd = YtDlp::new_multiple(Vec::new())
-            .arg_with("-o", "%(id)s.comments.json")
-            .arg_with("-P", output_dir.to_string_lossy().to_string())
-            .arg_with("-a", list_file.to_string_lossy().to_string())
-            .arg("--write-comments")
-            .arg("--skip-download")
-            .arg("--no-colors");
+        let mut ytd = YtDlp::new_multiple(Vec::new());
+        for arg in comments_from_file_args(list_file, output_dir) {
+            ytd = ytd.arg(arg);
+        }
         ytd.download()
             .await
             .with_context(|| format!("Failed to run yt-dlp for comments: {:?}", list_file))?;
@@ -113,12 +108,13 @@ impl YtDlpBackend for YtdRsBackend {
     }
 
     async fn download_comments_for_video(&self, video: &Video, output_dir: &Path) -> Result<()> {
-        let ytd = YtDlp::new(video.url())
-            .arg_with("-o", "%(id)s.comments.json")
-            .arg_with("-P", output_dir.to_string_lossy().to_string())
-            .arg("--write-comments")
-            .arg("--skip-download")
-            .arg("--no-colors");
+        let video_url = video.url();
+        let mut ytd = YtDlp::new(&video_url);
+        for arg in comments_for_video_args(video, output_dir) {
+            if arg != video_url {
+                ytd = ytd.arg(arg);
+            }
+        }
         ytd.download()
             .await
             .with_context(|| format!("Failed to run yt-dlp for video: {}", video.id))?;
@@ -151,6 +147,41 @@ fn download_args(deno_path: &Path, archive_file: &Path, output_dir: &Path) -> Ve
         archive_file.as_os_str().to_owned(),
         OsString::from("-P"),
         output_dir.as_os_str().to_owned(),
+    ]
+}
+
+/// Shared yt-dlp arg set for comments-only downloads (batch list-file path).
+///
+/// Flag order matches the previous Command / ytd-rs builder path:
+/// `-o` template, `-P` dir, `-a` list, then `--write-comments --skip-download --no-colors`.
+fn comments_from_file_args(list_file: &Path, output_dir: &Path) -> Vec<String> {
+    vec![
+        "-o".into(),
+        "%(id)s.comments.json".into(),
+        "-P".into(),
+        output_dir.to_string_lossy().into_owned(),
+        "-a".into(),
+        list_file.to_string_lossy().into_owned(),
+        "--write-comments".into(),
+        "--skip-download".into(),
+        "--no-colors".into(),
+    ]
+}
+
+/// Shared yt-dlp arg set for comments-only downloads of a single video.
+///
+/// Same comment flags as [`comments_from_file_args`], without `-a`; the video
+/// URL is last (passed to `YtDlp::new` as the link).
+fn comments_for_video_args(video: &Video, output_dir: &Path) -> Vec<String> {
+    vec![
+        "-o".into(),
+        "%(id)s.comments.json".into(),
+        "-P".into(),
+        output_dir.to_string_lossy().into_owned(),
+        "--write-comments".into(),
+        "--skip-download".into(),
+        "--no-colors".into(),
+        video.url(),
     ]
 }
 
@@ -218,6 +249,72 @@ mod tests {
             !args
                 .iter()
                 .any(|a| a.to_string_lossy().contains('\u{FFFD}'))
+        );
+    }
+
+    #[test]
+    fn comments_from_file_args_include_comment_and_playlist_flags() {
+        let list = Path::new("/tmp/channel-list.txt");
+        let out = Path::new("/tmp/comments");
+        let args = comments_from_file_args(list, out);
+
+        assert!(
+            args.windows(2)
+                .any(|w| w[0] == "-o" && w[1] == "%(id)s.comments.json"),
+            "missing comments output template: {args:?}"
+        );
+        assert!(
+            args.windows(2)
+                .any(|w| w[0] == "-P" && w[1] == "/tmp/comments"),
+            "missing -P output dir: {args:?}"
+        );
+        assert!(
+            args.windows(2)
+                .any(|w| w[0] == "-a" && w[1] == "/tmp/channel-list.txt"),
+            "missing playlist -a list file: {args:?}"
+        );
+        for flag in ["--write-comments", "--skip-download", "--no-colors"] {
+            assert!(args.iter().any(|a| a == flag), "missing {flag}: {args:?}");
+        }
+        assert!(
+            !args.iter().any(|a| a.contains("youtube.com/watch")),
+            "batch path must not take a watch URL: {args:?}"
+        );
+    }
+
+    #[test]
+    fn comments_for_video_args_include_comment_flags_and_video_url() {
+        use crate::types::{Channel, ChannelName, Video, VideoId};
+
+        let video = Video::new(
+            VideoId::new("dQw4w9WgXcQ").unwrap(),
+            "Never Gonna Give You Up",
+            Channel::new(ChannelName::new("testchannel").unwrap()),
+        );
+        let out = Path::new("/tmp/comments");
+        let args = comments_for_video_args(&video, out);
+
+        assert!(
+            args.windows(2)
+                .any(|w| w[0] == "-o" && w[1] == "%(id)s.comments.json"),
+            "missing comments output template: {args:?}"
+        );
+        assert!(
+            args.windows(2)
+                .any(|w| w[0] == "-P" && w[1] == "/tmp/comments"),
+            "missing -P output dir: {args:?}"
+        );
+        for flag in ["--write-comments", "--skip-download", "--no-colors"] {
+            assert!(args.iter().any(|a| a == flag), "missing {flag}: {args:?}");
+        }
+        assert_eq!(
+            args.last().map(String::as_str),
+            Some("https://www.youtube.com/watch?v=dQw4w9WgXcQ"),
+            "video URL must be last: {args:?}"
+        );
+        assert!(
+            !args.iter().any(|a| a == "-a"),
+            "per-video path must not use playlist -a: {args:?}"
         );
     }
 

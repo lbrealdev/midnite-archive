@@ -1,18 +1,12 @@
+use crate::backend::{YtDlpBackend, YtdRsBackend};
 use crate::types::{Channel, Video, VideoId};
 use anyhow::{Result, bail};
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
-#[cfg(feature = "ytd-rs-backend")]
-use crate::backend::{YtDlpBackend, YtdRsBackend};
-#[cfg(not(feature = "ytd-rs-backend"))]
-use crate::backend;
-
 /// Process-wide current-thread Tokio runtime for the sync facade.
 ///
-/// Only used when `ytd-rs-backend` is enabled. Never call `block_on` from
-/// inside an async context (it panics).
-#[cfg(feature = "ytd-rs-backend")]
+/// Never call `block_on` from inside an async context (it panics).
 fn runtime() -> &'static tokio::runtime::Runtime {
     static RT: std::sync::OnceLock<tokio::runtime::Runtime> = std::sync::OnceLock::new();
     RT.get_or_init(|| {
@@ -161,14 +155,7 @@ pub fn generate_channel_list(
     output_file: &Path,
     filter: Option<&str>,
 ) -> Result<Vec<Video>> {
-    #[cfg(feature = "ytd-rs-backend")]
-    {
-        runtime().block_on(YtdRsBackend.generate_channel_list(channel, output_file, filter))
-    }
-    #[cfg(not(feature = "ytd-rs-backend"))]
-    {
-        backend::command::generate_channel_list(channel, output_file, filter)
-    }
+    runtime().block_on(YtdRsBackend.generate_channel_list(channel, output_file, filter))
 }
 
 /// Parse yt-dlp `--flat-playlist --print "%(title)s-%(id)s"` output into Videos.
@@ -210,14 +197,7 @@ pub fn parse_channel_list_output(stdout: &str, channel: &Channel) -> Vec<Video> 
 }
 
 pub fn download_from_url(url: &str, output_dir: &Path) -> Result<()> {
-    #[cfg(feature = "ytd-rs-backend")]
-    {
-        runtime().block_on(YtdRsBackend.download_from_url(url, output_dir))
-    }
-    #[cfg(not(feature = "ytd-rs-backend"))]
-    {
-        backend::command::download_from_url(url, output_dir)
-    }
+    runtime().block_on(YtdRsBackend.download_from_url(url, output_dir))
 }
 
 pub fn download_from_file(
@@ -226,42 +206,21 @@ pub fn download_from_file(
     total_videos: usize,
     downloaded_count: usize,
 ) -> Result<()> {
-    #[cfg(feature = "ytd-rs-backend")]
-    {
-        runtime().block_on(YtdRsBackend.download_from_file(
-            list_file,
-            output_dir,
-            total_videos,
-            downloaded_count,
-        ))
-    }
-    #[cfg(not(feature = "ytd-rs-backend"))]
-    {
-        backend::command::download_from_file(list_file, output_dir, total_videos, downloaded_count)
-    }
+    runtime().block_on(YtdRsBackend.download_from_file(
+        list_file,
+        output_dir,
+        total_videos,
+        downloaded_count,
+    ))
 }
 
 pub fn download_comments(list_file: &Path, output_dir: &Path) -> Result<()> {
-    #[cfg(feature = "ytd-rs-backend")]
-    {
-        runtime().block_on(YtdRsBackend.download_comments(list_file, output_dir))
-    }
-    #[cfg(not(feature = "ytd-rs-backend"))]
-    {
-        backend::command::download_comments(list_file, output_dir)
-    }
+    runtime().block_on(YtdRsBackend.download_comments(list_file, output_dir))
 }
 
 /// Download comments for a specific video.
 pub fn download_comments_for_video(video: &Video, output_dir: &Path) -> Result<()> {
-    #[cfg(feature = "ytd-rs-backend")]
-    {
-        runtime().block_on(YtdRsBackend.download_comments_for_video(video, output_dir))
-    }
-    #[cfg(not(feature = "ytd-rs-backend"))]
-    {
-        backend::command::download_comments_for_video(video, output_dir)
-    }
+    runtime().block_on(YtdRsBackend.download_comments_for_video(video, output_dir))
 }
 
 #[cfg(test)]

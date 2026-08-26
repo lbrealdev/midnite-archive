@@ -4,6 +4,14 @@ Research note for replacing the direct `std::process::Command` calls in
 `src/yt_dlp.rs` with a maintained Rust API while keeping yt-dlp as the download
 engine.
 
+## Status
+
+Migration complete (2026-08-26). `ytd-rs` is the only backend and is
+non-optional. The optional Cargo feature and the Command adapter module
+have been removed. Media downloads (`download_from_url` / `download_from_file`)
+use a midnite-owned tokio runner (`src/backend/process.rs`); generate and
+comments use buffered `ytd-rs` `download()`.
+
 ## Goals
 
 - Preserve yt-dlp's broad site support and frequent upstream fixes.
@@ -166,10 +174,18 @@ The preferred candidate must demonstrate all of the following before replacing
 `src/yt_dlp.rs`:
 
 1. Generate a flat channel list and apply `--match-title`.
+   **Done (2026-08-17):** [#69](https://github.com/lbrealdev/midnite-archive/issues/69).
 2. Download a single URL and a batch file with the existing output template.
+   **Done (2026-08-17):** [#67](https://github.com/lbrealdev/midnite-archive/issues/67) /
+   [#68](https://github.com/lbrealdev/midnite-archive/issues/68).
 3. Preserve `--download-archive` behavior.
+   **Done (2026-08-17):** [#67](https://github.com/lbrealdev/midnite-archive/issues/67) /
+   [#68](https://github.com/lbrealdev/midnite-archive/issues/68).
 4. Download comments without media.
+   **Done (2026-08-17):** [#70](https://github.com/lbrealdev/midnite-archive/issues/70).
 5. Pass EJS remote components and the Deno runtime.
+   **Done (2026-08-17):** [#67](https://github.com/lbrealdev/midnite-archive/issues/67) /
+   [#68](https://github.com/lbrealdev/midnite-archive/issues/68).
 6. Surface cancellation-safe, line-by-line progress suitable for both CLI and
    future TUI consumers. **Done (2026-08-26):** media downloads (`download_from_url`
    / `download_from_file`) use a midnite-owned `tokio::process` runner
@@ -186,9 +202,20 @@ The preferred candidate must demonstrate all of the following before replacing
    to the returned `anyhow::Error`.
 8. Work with externally installed yt-dlp/ffmpeg on Linux, with a documented
    path for macOS and Windows packaging.
+   **Done (2026-08-26):** see [Platform support](#platform-support).
 9. Confirm the selected crate's license metadata and compatibility before
    merging the dependency. **Done (2026-07-25):** MIT confirmed; see
    [License decision](#license-decision-ytd-rs-021).
+
+## Platform support
+
+Linux `x86_64-unknown-linux-musl` is the released artifact (see
+`.github/workflows/release.yml`). macOS and Windows are compile-verified
+only (`cargo check --target`); they are not shipped. Windows cancel is
+limited to the direct child (`start_kill()`, no job objects) as documented
+under spike criterion 6. `yt-dlp`, `ffmpeg`, and `deno` stay externally
+installed; midnite-archive does not bundle them. The packaging path for
+additional platforms is adding targets to the `release.yml` build matrix.
 
 ## Dependency health checks
 
