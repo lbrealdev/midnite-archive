@@ -98,6 +98,8 @@ where
     );
     let mut stdout_done = false;
     let mut stderr_done = false;
+    let mut stdout_buf = Vec::new();
+    let mut stderr_buf = Vec::new();
     let mut stderr_tail: VecDeque<String> = VecDeque::new();
 
     tokio::pin!(cancel);
@@ -105,13 +107,13 @@ where
     let cancelled = loop {
         tokio::select! {
             _ = &mut cancel => break true,
-            line = read_line_lossy(&mut stdout), if !stdout_done => {
+            line = read_line_lossy(&mut stdout, &mut stdout_buf), if !stdout_done => {
                 match line.context("reading stdout")? {
                     Some(line) => on_event(classify_and_emit(&line)),
                     None => stdout_done = true,
                 }
             }
-            line = read_line_lossy(&mut stderr), if !stderr_done => {
+            line = read_line_lossy(&mut stderr, &mut stderr_buf), if !stderr_done => {
                 match line.context("reading stderr")? {
                     Some(line) => {
                         on_event(classify_and_emit_stderr(&line));
@@ -130,6 +132,8 @@ where
             child,
             &mut stdout,
             &mut stderr,
+            &mut stdout_buf,
+            &mut stderr_buf,
             &mut stdout_done,
             &mut stderr_done,
             &mut stderr_tail,
@@ -139,23 +143,52 @@ where
         return Ok(RunOutcome::Cancelled);
     }
 
-    let status = child.wait().await.context("waiting for process")?;
-    if status.success() {
-        Ok(RunOutcome::Success)
-    } else {
-        Err(exit_error(status.code(), &stderr_tail))
+    // Race the success-path reap against cancel: a child that closed its
+    // pipes without exiting must still be group-killed by Ctrl-C.
+    tokio::select! {
+        status = child.wait() => {
+            let status = status.context("waiting for process")?;
+            if status.success() {
+                Ok(RunOutcome::Success)
+            } else {
+                Err(exit_error(status.code(), &stderr_tail))
+            }
+        }
+        _ = &mut cancel => {
+            cancel_and_reap(
+                child,
+                &mut stdout,
+                &mut stderr,
+                &mut stdout_buf,
+                &mut stderr_buf,
+                &mut stdout_done,
+                &mut stderr_done,
+                &mut stderr_tail,
+                &mut on_event,
+            )
+            .await?;
+            Ok(RunOutcome::Cancelled)
+        }
     }
 }
 
 /// Read one line of bytes, decode with lossy UTF-8. `None` at EOF.
 /// A final chunk without a trailing newline is still returned as a line.
-async fn read_line_lossy<R>(reader: &mut R) -> std::io::Result<Option<String>>
+///
+/// `buf` is owned by the caller (one per stream). `read_until` is not
+/// cancellation-safe; hoisting the buffer means a dropped `select!` branch
+/// keeps already-consumed bytes so the next call can continue.
+async fn read_line_lossy<R>(reader: &mut R, buf: &mut Vec<u8>) -> std::io::Result<Option<String>>
 where
     R: AsyncBufRead + Unpin,
 {
-    let mut buf = Vec::new();
-    let n = reader.read_until(b'\n', &mut buf).await?;
-    if n == 0 {
+    loop {
+        let n = reader.read_until(b'\n', buf).await?;
+        if n == 0 || buf.last() == Some(&b'\n') {
+            break;
+        }
+    }
+    if buf.is_empty() {
         return Ok(None);
     }
     if buf.last() == Some(&b'\n') {
@@ -164,7 +197,9 @@ where
             buf.pop();
         }
     }
-    Ok(Some(String::from_utf8_lossy(&buf).into_owned()))
+    let line = String::from_utf8_lossy(buf).into_owned();
+    buf.clear();
+    Ok(Some(line))
 }
 
 fn push_tail(tail: &mut VecDeque<String>, line: String) {
@@ -179,9 +214,12 @@ fn exit_error(code: Option<i32>, tail: &VecDeque<String>) -> anyhow::Error {
     anyhow!("process exited with status {code:?}\n{tail_text}")
 }
 
+#[allow(clippy::too_many_arguments)]
 async fn drain_pipes(
     stdout: &mut BufReader<ChildStdout>,
     stderr: &mut BufReader<ChildStderr>,
+    stdout_buf: &mut Vec<u8>,
+    stderr_buf: &mut Vec<u8>,
     stdout_done: &mut bool,
     stderr_done: &mut bool,
     stderr_tail: &mut VecDeque<String>,
@@ -189,13 +227,13 @@ async fn drain_pipes(
 ) {
     loop {
         tokio::select! {
-            line = read_line_lossy(stdout), if !*stdout_done => {
+            line = read_line_lossy(stdout, stdout_buf), if !*stdout_done => {
                 match line {
                     Ok(Some(line)) => on_event(classify_and_emit(&line)),
                     _ => *stdout_done = true,
                 }
             }
-            line = read_line_lossy(stderr), if !*stderr_done => {
+            line = read_line_lossy(stderr, stderr_buf), if !*stderr_done => {
                 match line {
                     Ok(Some(line)) => {
                         on_event(classify_and_emit_stderr(&line));
@@ -209,10 +247,13 @@ async fn drain_pipes(
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 async fn cancel_and_reap(
     child: &mut Child,
     stdout: &mut BufReader<ChildStdout>,
     stderr: &mut BufReader<ChildStderr>,
+    stdout_buf: &mut Vec<u8>,
+    stderr_buf: &mut Vec<u8>,
     stdout_done: &mut bool,
     stderr_done: &mut bool,
     stderr_tail: &mut VecDeque<String>,
@@ -225,6 +266,8 @@ async fn cancel_and_reap(
         drain_pipes(
             stdout,
             stderr,
+            stdout_buf,
+            stderr_buf,
             stdout_done,
             stderr_done,
             stderr_tail,
@@ -608,6 +651,118 @@ mod tests {
             dead,
             "grandchild pid {grandchild} still alive after partial-line run"
         );
+    }
+
+    #[tokio::test]
+    async fn crlf_line_is_stripped() {
+        let (on_event, events) = collect();
+        let outcome = run_streaming(
+            "/bin/sh",
+            ["-c", "printf 'hello\\r\\n'"],
+            std::future::pending::<()>(),
+            on_event,
+        )
+        .await
+        .expect("run");
+        assert_eq!(outcome, RunOutcome::Success);
+        let events = events.lock().expect("events mutex");
+        assert!(
+            events
+                .iter()
+                .any(|e| matches!(e, YtDlpEvent::Log { raw } if raw == "hello")),
+            "CRLF not stripped: {events:?}"
+        );
+    }
+
+    #[tokio::test]
+    async fn interleaved_stderr_error_keeps_prefix_and_tail() {
+        let (on_event, events) = collect();
+        let err = run_streaming(
+            "/bin/sh",
+            [
+                "-c",
+                "printf 'ERROR: could not ' >&2; \
+                 echo '[download]  12.3% of 50.00MiB at 1.00MiB/s ETA 00:50'; \
+                 printf 'download video\\n' >&2; \
+                 exit 1",
+            ],
+            std::future::pending::<()>(),
+            on_event,
+        )
+        .await
+        .expect_err("nonzero");
+        let msg = format!("{err:#}");
+        assert!(
+            msg.contains("ERROR: could not download video"),
+            "stderr tail mutilated: {msg}"
+        );
+        let events = events.lock().expect("events mutex");
+        assert!(
+            events.iter().any(|e| matches!(
+                e,
+                YtDlpEvent::Error { raw } if raw == "ERROR: could not download video"
+            )),
+            "missing Error event: {events:?}"
+        );
+        assert!(
+            events.iter().any(|e| matches!(
+                e,
+                YtDlpEvent::Progress { percent: Some(p), .. } if (*p - 12.3).abs() < 1e-4
+            )),
+            "missing progress: {events:?}"
+        );
+    }
+
+    #[tokio::test]
+    async fn interleaved_stdout_keeps_split_line() {
+        let (on_event, events) = collect();
+        let outcome = run_streaming(
+            "/bin/sh",
+            [
+                "-c",
+                "printf 'HEAD-'; echo 'WARNING: x' >&2; printf 'TAIL\\n'",
+            ],
+            std::future::pending::<()>(),
+            on_event,
+        )
+        .await
+        .expect("run");
+        assert_eq!(outcome, RunOutcome::Success);
+        let events = events.lock().expect("events mutex");
+        assert!(
+            events
+                .iter()
+                .any(|e| matches!(e, YtDlpEvent::Log { raw } if raw == "HEAD-TAIL")),
+            "split stdout line lost: {events:?}"
+        );
+        assert!(
+            events
+                .iter()
+                .any(|e| matches!(e, YtDlpEvent::Log { raw } if raw.contains("WARNING: x"))),
+            "missing stderr log: {events:?}"
+        );
+    }
+
+    #[tokio::test]
+    async fn cancel_wins_during_success_path_wait() {
+        let (tx, rx) = oneshot::channel();
+        let streaming = run_streaming(
+            "/bin/sh",
+            ["-c", "exec >/dev/null 2>&1; while true; do sleep 0.05; done"],
+            async {
+                let _ = rx.await;
+            },
+            |_| {},
+        );
+        tokio::pin!(streaming);
+
+        tokio::time::sleep(Duration::from_millis(500)).await;
+        tx.send(()).expect("send cancel");
+        let outcome = tokio::time::timeout(Duration::from_secs(10), streaming)
+            .await
+            .expect("cancel during success-path wait timed out")
+            .expect("run");
+        assert_eq!(outcome, RunOutcome::Cancelled);
     }
 
     async fn wait_for_pidfile(pidfile: &std::path::Path) -> u32 {
