@@ -148,3 +148,71 @@ PY
 - [`RESULTS.md`](RESULTS.md) — wrapper bake-off decision (`ytd-rs` preferred)
 - [`../docs/yt-dlp-integration.md`](../docs/yt-dlp-integration.md) — integration goals and spike acceptance criteria
 - [`README.md`](README.md) — how to run the PoCs
+
+## After integration (2026-08-26, current main)
+
+Post-migration snapshot of production `midnite-archive` on current `main` (`0ad1189`, crate **0.3.0**). Compile timings are idle-machine, 3-run clean `cargo build --release` (median + range). `--help` is a startup sanity check only — **no download-speed or runtime-parity claims**.
+
+### Environment
+
+| Item | Value |
+|------|-------|
+| Date (UTC) | 2026-08-26 |
+| Host | Debian GNU/Linux 13 (trixie), Linux 6.12.105+deb13-amd64 x86_64, **2 cores** |
+| rustc | 1.90.0 (1159e78c4 2025-09-14) |
+| cargo | 1.90.0 (840b83a10 2025-07-30) |
+| Strip | GNU strip (GNU Binutils for Debian) 2.44 |
+| Profile | `cargo build --release` (clean) |
+| Toolchain vs 2026-07-23 baseline | **1.97.1 → 1.90.0** (pinned `rust-toolchain.toml`). Baseline recorded no CPU/core count, so compile-time deltas vs that row are **not directly comparable** across hosts (this machine is 2 cores). |
+
+### Matrix
+
+| Metric | 2026-07-23 (pre) | After (2026-08-26) | Control `082f094` same-host 1.90.0 |
+|--------|------------------|--------------------|-------------------------------------|
+| Role | Full CLI + sync `Command` yt-dlp (0.2.0) | Full CLI + `ytd-rs` adapter (0.3.0) | Same source as 2026-07-23 row, rebuilt here |
+| Clean release compile | **14.6 s** | **86.382 s** median (n=3, wall 86.320–86.952 s; cargo Finished `1m 26s` ×3) | **64.770 s** median (n=3, wall 64.654–64.860 s; cargo Finished `1m 04s` ×3) |
+| Release binary size | **4,909,000 B (4.68 MiB)** | **5,716,424 B (5.45 MiB)** | **5,064,304 B (4.83 MiB)** |
+| Stripped binary size | **3,670,256 B (3.50 MiB)** | **4,375,512 B (4.17 MiB)** | **3,929,736 B (3.75 MiB)** |
+| `cargo tree` lines | 93 | 135 | 93 |
+| Resolved packages (`cargo metadata`) | 121 | 132 | 121 |
+
+Set B (cheap, no compile) on `082f094` + cargo 1.90.0 matched the historical tree/resolve counts (93 / 121). Set C (clean release rebuild of that commit on this host + 1.90.0) succeeded; the Control column is that rebuild.
+
+### Commentary
+
+The 2026-07-23 → After compile jump (14.6 s → 86 s) is **partly toolchain/host, not a clean migration delta**: rustc **1.97.1 → 1.90.0**, and this host is 2 cores with no baseline core count recorded. Binary size on the same pre-migration source also moved under 1.90.0 (release 4,909,000 → 5,064,304 B; stripped 3,670,256 → 3,929,736 B), so the 2026-07-23 → After size delta is likewise mixed.
+
+The defensible same-host, same-toolchain (1.90.0) **migration** figure is Control `082f094` → After:
+
+| Metric | Control → After |
+|--------|-----------------|
+| Clean compile (wall median) | **+21.612 s** (64.770 → 86.382 s; Finished `1m 04s` → `1m 26s`) |
+| Release size | **+652,120 B** (5,064,304 → 5,716,424) |
+| Stripped size | **+445,776 B** (3,929,736 → 4,375,512) |
+| `cargo tree` lines | **+42** (93 → 135) |
+| Resolved packages | **+11** (121 → 132) |
+
+That growth is consistent with adding Tokio + `ytd-rs` (and related crates) to the production CLI. Direct deps after (`cargo tree --depth 1`): anyhow, async-trait, chrono, clap, comfy-table, libc, regex, tokio, tracing, tracing-subscriber, walkdir, which, ytd-rs.
+
+`--help` median of 5 runs (sanity check only): After 0.001625 s (1.63 ms); Control 0.001492 s (1.49 ms).
+
+### Direct dependency tree after (`cargo tree --depth 1`)
+
+```text
+midnite-archive v0.3.0
+├── anyhow v1.0.104
+├── async-trait v0.1.92 (proc-macro)
+├── chrono v0.4.45
+├── clap v4.6.6
+├── comfy-table v7.2.2
+├── libc v0.2.183
+├── regex v1.13.1
+├── tokio v1.53.1
+├── tracing v0.1.44
+├── tracing-subscriber v0.3.23
+├── walkdir v2.5.0
+├── which v8.0.5
+└── ytd-rs v0.2.1
+[dev-dependencies]
+└── tempfile v3.27.0
+```
