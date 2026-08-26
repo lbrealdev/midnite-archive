@@ -19,7 +19,7 @@ use std::ffi::OsStr;
 use std::future::Future;
 use std::process::Stdio;
 use std::time::Duration;
-use tokio::io::{AsyncBufReadExt, BufReader, Lines};
+use tokio::io::{AsyncBufRead, AsyncBufReadExt, BufReader};
 use tokio::process::{Child, ChildStderr, ChildStdout, Command};
 use tokio::time::timeout;
 
@@ -39,7 +39,7 @@ pub(crate) async fn run_streaming<A, I, S, C, F>(
     program: A,
     args: I,
     cancel: C,
-    mut on_event: F,
+    on_event: F,
 ) -> Result<RunOutcome>
 where
     A: AsRef<OsStr>,
@@ -52,6 +52,8 @@ where
     cmd.args(args)
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
+        .env("LC_ALL", "en_US.UTF-8")
+        .env("PYTHONIOENCODING", "utf-8")
         .kill_on_drop(true);
 
     #[cfg(unix)]
@@ -63,20 +65,37 @@ where
         .spawn()
         .with_context(|| format!("failed to spawn {}", program.as_ref().to_string_lossy()))?;
 
+    let child_pid = child.id();
+    let result = run_streaming_inner(&mut child, cancel, on_event).await;
+    // Every exit path must signal the process group: `kill_on_drop` SIGKILLs
+    // only the direct child, leaving deno/ffmpeg grandchildren alive.
+    let _ = signal_kill_captured(&mut child, child_pid);
+    let _ = child.wait().await;
+    result
+}
+
+/// Streaming loop + wait. The outer function always group-kills and reaps.
+async fn run_streaming_inner<C, F>(
+    child: &mut Child,
+    cancel: C,
+    mut on_event: F,
+) -> Result<RunOutcome>
+where
+    C: Future<Output = ()>,
+    F: FnMut(YtDlpEvent),
+{
     let mut stdout = BufReader::new(
         child
             .stdout
             .take()
             .context("stdout pipe missing after spawn")?,
-    )
-    .lines();
+    );
     let mut stderr = BufReader::new(
         child
             .stderr
             .take()
             .context("stderr pipe missing after spawn")?,
-    )
-    .lines();
+    );
     let mut stdout_done = false;
     let mut stderr_done = false;
     let mut stderr_tail: VecDeque<String> = VecDeque::new();
@@ -86,13 +105,13 @@ where
     let cancelled = loop {
         tokio::select! {
             _ = &mut cancel => break true,
-            line = stdout.next_line(), if !stdout_done => {
+            line = read_line_lossy(&mut stdout), if !stdout_done => {
                 match line.context("reading stdout")? {
                     Some(line) => on_event(classify_and_emit(&line)),
                     None => stdout_done = true,
                 }
             }
-            line = stderr.next_line(), if !stderr_done => {
+            line = read_line_lossy(&mut stderr), if !stderr_done => {
                 match line.context("reading stderr")? {
                     Some(line) => {
                         on_event(classify_and_emit_stderr(&line));
@@ -108,7 +127,7 @@ where
 
     if cancelled {
         cancel_and_reap(
-            &mut child,
+            child,
             &mut stdout,
             &mut stderr,
             &mut stdout_done,
@@ -128,6 +147,26 @@ where
     }
 }
 
+/// Read one line of bytes, decode with lossy UTF-8. `None` at EOF.
+/// A final chunk without a trailing newline is still returned as a line.
+async fn read_line_lossy<R>(reader: &mut R) -> std::io::Result<Option<String>>
+where
+    R: AsyncBufRead + Unpin,
+{
+    let mut buf = Vec::new();
+    let n = reader.read_until(b'\n', &mut buf).await?;
+    if n == 0 {
+        return Ok(None);
+    }
+    if buf.last() == Some(&b'\n') {
+        buf.pop();
+        if buf.last() == Some(&b'\r') {
+            buf.pop();
+        }
+    }
+    Ok(Some(String::from_utf8_lossy(&buf).into_owned()))
+}
+
 fn push_tail(tail: &mut VecDeque<String>, line: String) {
     if tail.len() == STDERR_TAIL {
         tail.pop_front();
@@ -141,8 +180,8 @@ fn exit_error(code: Option<i32>, tail: &VecDeque<String>) -> anyhow::Error {
 }
 
 async fn drain_pipes(
-    stdout: &mut Lines<BufReader<ChildStdout>>,
-    stderr: &mut Lines<BufReader<ChildStderr>>,
+    stdout: &mut BufReader<ChildStdout>,
+    stderr: &mut BufReader<ChildStderr>,
     stdout_done: &mut bool,
     stderr_done: &mut bool,
     stderr_tail: &mut VecDeque<String>,
@@ -150,13 +189,13 @@ async fn drain_pipes(
 ) {
     loop {
         tokio::select! {
-            line = stdout.next_line(), if !*stdout_done => {
+            line = read_line_lossy(stdout), if !*stdout_done => {
                 match line {
                     Ok(Some(line)) => on_event(classify_and_emit(&line)),
                     _ => *stdout_done = true,
                 }
             }
-            line = stderr.next_line(), if !*stderr_done => {
+            line = read_line_lossy(stderr), if !*stderr_done => {
                 match line {
                     Ok(Some(line)) => {
                         on_event(classify_and_emit_stderr(&line));
@@ -172,8 +211,8 @@ async fn drain_pipes(
 
 async fn cancel_and_reap(
     child: &mut Child,
-    stdout: &mut Lines<BufReader<ChildStdout>>,
-    stderr: &mut Lines<BufReader<ChildStderr>>,
+    stdout: &mut BufReader<ChildStdout>,
+    stderr: &mut BufReader<ChildStderr>,
     stdout_done: &mut bool,
     stderr_done: &mut bool,
     stderr_tail: &mut VecDeque<String>,
@@ -181,7 +220,7 @@ async fn cancel_and_reap(
 ) -> Result<()> {
     signal_term(child)?;
 
-    if timeout(
+    let _ = timeout(
         CANCEL_GRACE,
         drain_pipes(
             stdout,
@@ -192,13 +231,17 @@ async fn cancel_and_reap(
             on_event,
         ),
     )
-    .await
-    .is_err()
-    {
-        signal_kill(child)?;
-    }
+    .await;
 
-    child.wait().await.context("reaping cancelled process")?;
+    match timeout(CANCEL_GRACE, child.wait()).await {
+        Ok(status) => {
+            status.context("reaping cancelled process")?;
+        }
+        Err(_elapsed) => {
+            signal_kill(child)?;
+            child.wait().await.context("reaping cancelled process")?;
+        }
+    }
     Ok(())
 }
 
@@ -227,11 +270,25 @@ fn signal_term(child: &mut Child) -> Result<()> {
 
 #[cfg(unix)]
 fn signal_kill(child: &mut Child) -> Result<()> {
-    let Some(pid) = child.id() else {
-        return Ok(());
-    };
-    signal_process_group(pid, libc::SIGKILL).context("SIGKILL process group")?;
-    Ok(())
+    signal_kill_captured(child, None)
+}
+
+/// SIGKILL the process group. `captured_pid` is used after `wait()` has
+/// already reaped the child (`Child::id()` then returns `None`).
+fn signal_kill_captured(child: &mut Child, captured_pid: Option<u32>) -> Result<()> {
+    #[cfg(unix)]
+    {
+        let Some(pid) = child.id().or(captured_pid) else {
+            return Ok(());
+        };
+        signal_process_group(pid, libc::SIGKILL).context("SIGKILL process group")?;
+        Ok(())
+    }
+    #[cfg(windows)]
+    {
+        let _ = captured_pid;
+        signal_kill(child)
+    }
 }
 
 /// Windows: `start_kill` terminates the direct child only (no job object).
@@ -463,5 +520,105 @@ mod tests {
                 .any(|e| matches!(e, YtDlpEvent::Error { raw } if raw == "ERROR: boom")),
             "{events:?}"
         );
+    }
+
+    #[tokio::test]
+    async fn non_utf8_stdout_does_not_abort() {
+        let dir = tempfile::tempdir().expect("tempdir");
+        let pidfile = dir.path().join("grandchild.pid");
+        let script = dir.path().join("non_utf8.sh");
+        std::fs::write(
+            &script,
+            "#!/bin/sh\n(\n  echo $$ > \"$1\"\n  while true; do sleep 0.05; done\n) >/dev/null 2>&1 &\nwhile [ ! -s \"$1\" ]; do sleep 0.01; done\nprintf 'a\\n\\377b\\nc\\n'\n",
+        )
+        .expect("write script");
+
+        let (on_event, events) = collect();
+        let outcome = run_streaming(
+            "/bin/sh",
+            [script.as_os_str(), pidfile.as_os_str()],
+            std::future::pending::<()>(),
+            on_event,
+        )
+        .await
+        .expect("run");
+        assert_eq!(outcome, RunOutcome::Success);
+
+        {
+            let events = events.lock().expect("events mutex");
+            let logs: Vec<&str> = events
+                .iter()
+                .filter_map(|e| match e {
+                    YtDlpEvent::Log { raw } => Some(raw.as_str()),
+                    _ => None,
+                })
+                .collect();
+            assert!(logs.contains(&"a"), "missing 'a': {events:?}");
+            assert!(
+                logs.iter().any(|l| l.contains('b')),
+                "missing lossy 'b' line: {events:?}"
+            );
+            assert!(logs.contains(&"c"), "missing 'c': {events:?}");
+        }
+
+        let grandchild = wait_for_pidfile(&pidfile).await;
+        let dead = poll_until(|| !pid_alive(grandchild), 100).await;
+        assert!(
+            dead,
+            "grandchild pid {grandchild} still alive after non-UTF-8 run"
+        );
+    }
+
+    #[tokio::test]
+    async fn eof_partial_line_without_newline() {
+        let dir = tempfile::tempdir().expect("tempdir");
+        let pidfile = dir.path().join("grandchild.pid");
+        let script = dir.path().join("partial.sh");
+        std::fs::write(
+            &script,
+            "#!/bin/sh\n(\n  echo $$ > \"$1\"\n  while true; do sleep 0.05; done\n) >/dev/null 2>&1 &\nwhile [ ! -s \"$1\" ]; do sleep 0.01; done\nprintf 'no-newline-tail'\n",
+        )
+        .expect("write script");
+
+        let (on_event, events) = collect();
+        let outcome = run_streaming(
+            "/bin/sh",
+            [script.as_os_str(), pidfile.as_os_str()],
+            std::future::pending::<()>(),
+            on_event,
+        )
+        .await
+        .expect("run");
+        assert_eq!(outcome, RunOutcome::Success);
+
+        {
+            let events = events.lock().expect("events mutex");
+            assert!(
+                events.iter().any(|e| match e {
+                    YtDlpEvent::Log { raw } => raw == "no-newline-tail",
+                    _ => false,
+                }),
+                "missing partial line: {events:?}"
+            );
+        }
+
+        let grandchild = wait_for_pidfile(&pidfile).await;
+        let dead = poll_until(|| !pid_alive(grandchild), 100).await;
+        assert!(
+            dead,
+            "grandchild pid {grandchild} still alive after partial-line run"
+        );
+    }
+
+    async fn wait_for_pidfile(pidfile: &std::path::Path) -> u32 {
+        for _ in 0..100 {
+            if let Ok(text) = std::fs::read_to_string(pidfile)
+                && let Ok(pid) = text.trim().parse::<u32>()
+            {
+                return pid;
+            }
+            tokio::time::sleep(Duration::from_millis(20)).await;
+        }
+        panic!("pidfile {} was never written", pidfile.display());
     }
 }

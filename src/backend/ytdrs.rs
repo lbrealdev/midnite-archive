@@ -22,6 +22,7 @@ use crate::yt_dlp::parse_channel_list_output;
 use anyhow::{Context, Result, bail};
 use async_trait::async_trait;
 use std::ffi::{OsStr, OsString};
+use std::future::Future;
 use std::path::Path;
 use ytd_rs::YtDlp;
 
@@ -69,7 +70,7 @@ impl YtDlpBackend for YtdRsBackend {
 
         let mut args = download_args(&deno_path, &archive_file, output_dir);
         args.push(OsString::from(url));
-        run_download("yt-dlp", args)
+        run_download("yt-dlp", args, wait_for_ctrl_c())
             .await
             .with_context(|| format!("Failed to run yt-dlp for URL: {}", url))?;
         Ok(())
@@ -91,7 +92,7 @@ impl YtDlpBackend for YtdRsBackend {
         let mut args = download_args(&deno_path, &archive_file, output_dir);
         args.push(OsString::from("-a"));
         args.push(list_file.as_os_str().to_owned());
-        run_download("yt-dlp", args)
+        run_download("yt-dlp", args, wait_for_ctrl_c())
             .await
             .with_context(|| format!("Failed to run yt-dlp for file: {:?}", list_file))?;
         Ok(())
@@ -153,30 +154,35 @@ fn download_args(deno_path: &Path, archive_file: &Path, output_dir: &Path) -> Ve
     ]
 }
 
-async fn run_download<A, I, S>(program: A, args: I) -> Result<()>
+async fn run_download<A, I, S, C>(program: A, args: I, cancel: C) -> Result<()>
 where
     A: AsRef<OsStr>,
     I: IntoIterator<Item = S>,
     S: AsRef<OsStr>,
+    C: Future<Output = ()>,
 {
-    let outcome = run_streaming(
-        program,
-        args,
-        async {
-            match tokio::signal::ctrl_c().await {
-                Ok(()) => {}
-                Err(e) => {
-                    tracing::warn!("failed to listen for Ctrl-C: {e}");
-                    std::future::pending::<()>().await;
-                }
-            }
-        },
-        |_| {},
-    )
-    .await?;
+    let outcome = run_streaming(program, args, cancel, |_| {}).await?;
     match outcome {
         RunOutcome::Success => Ok(()),
         RunOutcome::Cancelled => bail!("download cancelled"),
+    }
+}
+
+/// First Ctrl-C cancels the download. A re-armed listener hard-exits on the
+/// second SIGINT so the user can always escalate during grace / wait.
+async fn wait_for_ctrl_c() {
+    match tokio::signal::ctrl_c().await {
+        Ok(()) => {
+            tokio::spawn(async {
+                if tokio::signal::ctrl_c().await.is_ok() {
+                    std::process::exit(130);
+                }
+            });
+        }
+        Err(e) => {
+            tracing::warn!("failed to listen for Ctrl-C: {e}");
+            std::future::pending::<()>().await;
+        }
     }
 }
 
@@ -224,6 +230,7 @@ mod tests {
                 OsString::from("-c"),
                 OsString::from("echo '[download]  12.3% of 50.00MiB at 1.00MiB/s ETA 00:50'"),
             ],
+            std::future::pending::<()>(),
         )
         .await
         .expect("fake success");
@@ -238,6 +245,7 @@ mod tests {
                 OsString::from("-c"),
                 OsString::from("echo 'ERROR: boom' >&2; exit 2"),
             ],
+            std::future::pending::<()>(),
         )
         .await
         .expect_err("expected failure");
@@ -249,24 +257,26 @@ mod tests {
     #[cfg(unix)]
     #[tokio::test]
     async fn run_download_cancel_returns_err() {
-        let outcome = tokio::time::timeout(
+        let (tx, rx) = tokio::sync::oneshot::channel();
+        let err = tokio::time::timeout(
             std::time::Duration::from_secs(5),
-            run_streaming(
+            run_download(
                 "/bin/sh",
-                ["-c", "sleep 30"],
-                std::future::ready(()),
-                |_| {},
+                [OsString::from("-c"), OsString::from("sleep 30")],
+                async {
+                    let _ = rx.await;
+                },
             ),
-        )
-        .await
-        .expect("cancel timed out")
-        .expect("run");
-        assert_eq!(outcome, RunOutcome::Cancelled);
-        // Mirror production mapping: Cancelled becomes Err so CLI skips "done".
-        let mapped: Result<()> = match outcome {
-            RunOutcome::Success => Ok(()),
-            RunOutcome::Cancelled => Err(anyhow::anyhow!("download cancelled")),
-        };
-        assert!(mapped.is_err());
+        );
+        tx.send(()).expect("send cancel");
+        let err = err
+            .await
+            .expect("cancel timed out")
+            .expect_err("cancelled download should be Err");
+        let msg = format!("{err:#}");
+        assert!(
+            msg.contains("download cancelled"),
+            "production mapping missing: {msg}"
+        );
     }
 }
