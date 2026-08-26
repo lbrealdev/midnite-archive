@@ -2,7 +2,7 @@
 
 Rust CLI for archiving YouTube content of the reggae band **Midnite/Akae Beka** from our beloved teacher and guide **Vaughn Benjamin**.
 
-Uses yt-dlp with External JavaScript (EJS) support for reliable downloads despite YouTube's frequent changes.
+Uses yt-dlp (driven through the `ytd-rs` Rust wrapper) with External JavaScript (EJS) support for reliable downloads despite YouTube's frequent changes.
 
 ## Installation
 
@@ -103,7 +103,7 @@ just poc::clean        # Clean PoC build and download dirs
 
 - [Requirements](docs/requirements.md) - Setup and installation guide
 - [CLI UX Spec](docs/cli-ux.md) - Output contract, paths, and command summaries
-- [yt-dlp Rust Integration](docs/yt-dlp-integration.md) - Wrapper options and migration criteria
+- [yt-dlp Rust Integration](docs/yt-dlp-integration.md) - Backend decision, migration status, and platform support
 - [yt-dlp wrapper PoC](poc/README.md) - Side-by-side example crates, [results](poc/RESULTS.md), and [pre-migration baseline](poc/BASELINE.md)
 - [Troubleshooting](docs/troubleshooting.md) - Common issues and solutions
 - [Processing Comments](docs/processing-comments.md) - YouTube comment data extraction
