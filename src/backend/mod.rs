@@ -1,45 +1,35 @@
 //! YtDlp backend boundary.
 //!
 //! Abstracts over the mechanism used to invoke `yt-dlp` so that the CLI can
-//! migrate from raw `std::process::Command` to the async `ytd-rs` wrapper
-//! (Issue #66) without changing command behaviour.
+//! use the async `ytd-rs` wrapper (Issue #66) without changing command
+//! behaviour.
 //!
-//! - [`command`]: legacy sync `std::process::Command` implementations (default).
-//! - [`ytdrs`]: async `ytd-rs` adapter, compiled only with `ytd-rs-backend`.
+//! - [`ytdrs`]: async `ytd-rs` adapter (the only backend).
+//! - [`process`]: midnite-owned tokio runner for streaming media downloads.
 //!
-//! The sync facade in [`crate::yt_dlp`] selects the backend via the feature flag.
-//! Probe helpers stay sync and are intentionally NOT part of this boundary.
+//! The sync facade in [`crate::yt_dlp`] calls this backend via a process-wide
+//! Tokio runtime. Probe helpers stay sync and are intentionally NOT part of
+//! this boundary.
 
 use std::ffi::OsStr;
 use std::path::{Path, PathBuf};
 
-pub mod command;
-/// Always compiled so classifier tests run on the default (Command) build.
 /// Public classification API for the ytd-rs adapter and a future TUI.
 pub mod events;
 
-#[cfg(feature = "ytd-rs-backend")]
 pub(crate) mod process;
-#[cfg(feature = "ytd-rs-backend")]
 pub mod ytdrs;
 
-#[cfg(feature = "ytd-rs-backend")]
-pub use command::CommandBackend;
-#[cfg(feature = "ytd-rs-backend")]
 pub use ytdrs::YtdRsBackend;
 
-#[cfg(feature = "ytd-rs-backend")]
 use crate::types::{Channel, Video};
-#[cfg(feature = "ytd-rs-backend")]
 use anyhow::Result;
-#[cfg(feature = "ytd-rs-backend")]
 use async_trait::async_trait;
 
 /// Backend abstraction over the subset of `yt-dlp` operations the CLI uses.
 ///
-/// Available when `ytd-rs-backend` is enabled. The sync facade uses
-/// `runtime().block_on(...)` — never call `block_on` from an async context.
-#[cfg(feature = "ytd-rs-backend")]
+/// The sync facade uses `runtime().block_on(...)` — never call `block_on`
+/// from an async context.
 #[async_trait]
 pub trait YtDlpBackend: Send + Sync {
     /// Flat-playlist metadata fetch, returning parsed [`Video`]s and writing
@@ -118,13 +108,6 @@ mod tests {
         assert_eq!(path, PathBuf::from("/out/.archive/downloads.archive"));
     }
 
-    #[cfg(feature = "ytd-rs-backend")]
-    #[test]
-    fn command_backend_default_constructs() {
-        let _b: Box<dyn YtDlpBackend> = Box::new(CommandBackend);
-    }
-
-    #[cfg(feature = "ytd-rs-backend")]
     #[test]
     fn ytdrs_backend_default_constructs() {
         let _b: Box<dyn YtDlpBackend> = Box::new(YtdRsBackend);
