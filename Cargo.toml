@@ -16,12 +16,15 @@ chrono = "0.4"
 clap = { version = "4.6", features = ["derive"] }
 comfy-table = "=7.2.2"
 regex = "1.12.3"
-tokio = { version = "1", features = ["rt", "macros"], optional = true }
+tokio = { version = "1", features = ["rt", "macros", "process", "io-util", "signal", "time", "sync"], optional = true }
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 walkdir = "2.5"
 which = "8.0"
 ytd-rs = { version = "0.2.1", optional = true }
+
+[target.'cfg(unix)'.dependencies]
+libc = "0.2"
 
 [dev-dependencies]
 tempfile = "3.10"

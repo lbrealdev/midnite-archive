@@ -171,13 +171,19 @@ The preferred candidate must demonstrate all of the following before replacing
 4. Download comments without media.
 5. Pass EJS remote components and the Deno runtime.
 6. Surface cancellation-safe, line-by-line progress suitable for both CLI and
-   future TUI consumers. **Partial (2026-08-17):** media downloads stream
-   stdout via `download_process` and classify into midnite `YtDlpEvent`
-   (`-v` via tracing). Programmatic process kill is **not** available:
-   `ytd-rs` 0.2.1 `YtDlpChild` exposes only `next_line` / `wait`, does not
-   kill on drop, and does not drain stderr. TTY SIGINT may still reach
-   yt-dlp via the process group.
+   future TUI consumers. **Done (2026-08-26):** media downloads (`download_from_url`
+   / `download_from_file`) use a midnite-owned `tokio::process` runner
+   (`src/backend/process.rs`), not `ytd-rs` `download_process`. Lines are
+   classified into midnite `YtDlpEvent` (`Error` / `Progress` / `Log`). The
+   child is spawned in its own process group; Ctrl-C (`tokio::signal::ctrl_c()`)
+   SIGTERMs the group, drains for 3s, then SIGKILLs and reaps. Cancel returns
+   `Err` (nonzero CLI exit). Generate/comments stay on buffered `ytd-rs`
+   `download()` and are not cancellable. Windows cancel is `start_kill()` on
+   the direct child only (no job objects; CI is linux-musl).
 7. Produce actionable errors with subprocess exit status and stderr.
+   **Done (2026-08-26):** `ERROR:` lines are `YtDlpEvent::Error`. Both stdout
+   and stderr are drained; a nonzero exit attaches the last 20 stderr lines
+   to the returned `anyhow::Error`.
 8. Work with externally installed yt-dlp/ffmpeg on Linux, with a documented
    path for macOS and Windows packaging.
 9. Confirm the selected crate's license metadata and compatibility before

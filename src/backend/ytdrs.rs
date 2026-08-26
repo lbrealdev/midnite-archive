@@ -2,22 +2,27 @@
 //!
 //! Compiled only with the `ytd-rs-backend` feature.
 //!
-//! Media downloads stream yt-dlp stdout via [`YtDlp::download_process`] and
-//! classify lines into [`crate::backend::events::YtDlpEvent`]. Default CLI
-//! stays quiet (`-v` surfaces progress as `tracing` info).
+//! Media downloads stream yt-dlp stdout and stderr via a midnite-owned
+//! [`tokio::process`] runner and classify lines into
+//! [`crate::backend::events::YtDlpEvent`]. Default CLI stays quiet
+//! (`-v` surfaces progress as `tracing` info).
 //!
-//! **Cancellation:** `ytd-rs` 0.2.1 `YtDlpChild` exposes only `next_line` /
-//! `wait`. There is no public kill/pid API and the child is **not** killed on
-//! drop. TTY SIGINT may still stop yt-dlp via the process group. Programmatic
-//! cancel is blocked on upstream. stderr is piped but unread on this path
-//! (pipe-fill risk; failed `wait()` does not include real stderr).
+//! **Cancellation:** streaming downloads spawn yt-dlp in its own process
+//! group. Ctrl-C is caught with `tokio::signal::ctrl_c()`, which SIGTERMs
+//! the group, drains pipes for 3s, then SIGKILLs and reaps. `kill_on_drop(true)`
+//! is a panic/drop backstop. A cancelled download returns `Err` (nonzero CLI
+//! exit, no "done"). Generate and comments still use buffered `ytd-rs`
+//! `download()` and are not cancellable. Windows cancel is `start_kill()` on
+//! the direct child only (no job objects).
 
-use crate::backend::events::classify_and_emit;
+use crate::backend::process::{RunOutcome, run_streaming};
 use crate::backend::{YtDlpBackend, ensure_archive_parent, list_archive_path, url_archive_path};
 use crate::types::{Channel, Video};
 use crate::yt_dlp::parse_channel_list_output;
-use anyhow::{Context, Result};
+use anyhow::{Context, Result, bail};
 use async_trait::async_trait;
+use std::ffi::{OsStr, OsString};
+use std::future::Future;
 use std::path::Path;
 use ytd_rs::YtDlp;
 
@@ -63,8 +68,9 @@ impl YtDlpBackend for YtdRsBackend {
         ensure_archive_parent(&archive_file);
         tracing::info!("Using download archive: {}", archive_file.display());
 
-        let ytd = build_download_builder(url, &deno_path, &archive_file, output_dir);
-        run_download_process(ytd)
+        let mut args = download_args(&deno_path, &archive_file, output_dir);
+        args.push(OsString::from(url));
+        run_download("yt-dlp", args, wait_for_ctrl_c())
             .await
             .with_context(|| format!("Failed to run yt-dlp for URL: {}", url))?;
         Ok(())
@@ -83,16 +89,10 @@ impl YtDlpBackend for YtdRsBackend {
         ensure_archive_parent(&archive_file);
         tracing::info!("Using download archive: {}", archive_file.display());
 
-        // yt-dlp reads URLs from `-a <list_file>`; start with an empty link list
-        // (not YtDlp::new("")) so we never pass a spurious empty positional URL.
-        let ytd = apply_download_args(
-            YtDlp::new_multiple(Vec::new()),
-            &deno_path,
-            &archive_file,
-            output_dir,
-        )
-        .arg_with("-a", list_file.to_string_lossy().to_string());
-        run_download_process(ytd)
+        let mut args = download_args(&deno_path, &archive_file, output_dir);
+        args.push(OsString::from("-a"));
+        args.push(list_file.as_os_str().to_owned());
+        run_download("yt-dlp", args, wait_for_ctrl_c())
             .await
             .with_context(|| format!("Failed to run yt-dlp for file: {:?}", list_file))?;
         Ok(())
@@ -126,67 +126,157 @@ impl YtDlpBackend for YtdRsBackend {
     }
 }
 
-/// Stream yt-dlp stdout, classify lines, emit via tracing, then wait.
-async fn run_download_process(ytd: YtDlp) -> Result<()> {
-    let mut child = ytd.download_process().await?;
-    while let Some(line) = child.next_line().await? {
-        classify_and_emit(&line);
-    }
-    child.wait().await?;
-    Ok(())
-}
-
 /// Shared yt-dlp arg set for the EJS/Deno download flow (url + file variants).
-fn build_download_builder(
-    url: &str,
-    deno_path: &Path,
-    archive_file: &Path,
-    output_dir: &Path,
-) -> YtDlp {
-    apply_download_args(YtDlp::new(url), deno_path, archive_file, output_dir)
+///
+/// Paths are kept as [`OsString`] (no `to_string_lossy`). Includes `--newline`
+/// so progress lines are one-per-line for the streaming classifier.
+fn download_args(deno_path: &Path, archive_file: &Path, output_dir: &Path) -> Vec<OsString> {
+    let mut js_runtime = OsString::from("deno:");
+    js_runtime.push(deno_path.as_os_str());
+
+    vec![
+        OsString::from("-cw"),
+        OsString::from("-o"),
+        OsString::from("%(title)s-%(id)s.%(ext)s"),
+        OsString::from("--embed-thumbnail"),
+        OsString::from("--write-description"),
+        OsString::from("--embed-metadata"),
+        OsString::from("--no-colors"),
+        OsString::from("--newline"),
+        OsString::from("--remote-components"),
+        OsString::from("ejs:npm"),
+        OsString::from("--js-runtimes"),
+        js_runtime,
+        OsString::from("--download-archive"),
+        archive_file.as_os_str().to_owned(),
+        OsString::from("-P"),
+        output_dir.as_os_str().to_owned(),
+    ]
 }
 
-fn apply_download_args(
-    ytd: YtDlp,
-    deno_path: &Path,
-    archive_file: &Path,
-    output_dir: &Path,
-) -> YtDlp {
-    ytd.arg("-cw")
-        .arg_with("-o", "%(title)s-%(id)s.%(ext)s")
-        .arg("--embed-thumbnail")
-        .arg("--write-description")
-        .arg("--embed-metadata")
-        .arg("--no-colors")
-        .arg("--remote-components")
-        .arg("ejs:npm")
-        .arg_with("--js-runtimes", format!("deno:{}", deno_path.display()))
-        .arg_with(
-            "--download-archive",
-            archive_file.to_string_lossy().to_string(),
-        )
-        .arg_with("-P", output_dir.to_string_lossy().to_string())
+async fn run_download<A, I, S, C>(program: A, args: I, cancel: C) -> Result<()>
+where
+    A: AsRef<OsStr>,
+    I: IntoIterator<Item = S>,
+    S: AsRef<OsStr>,
+    C: Future<Output = ()>,
+{
+    let outcome = run_streaming(program, args, cancel, |_| {}).await?;
+    match outcome {
+        RunOutcome::Success => Ok(()),
+        RunOutcome::Cancelled => bail!("download cancelled"),
+    }
+}
+
+/// First Ctrl-C cancels the download. A re-armed listener hard-exits on the
+/// second SIGINT so the user can always escalate during grace / wait.
+async fn wait_for_ctrl_c() {
+    match tokio::signal::ctrl_c().await {
+        Ok(()) => {
+            tokio::spawn(async {
+                if tokio::signal::ctrl_c().await.is_ok() {
+                    std::process::exit(130);
+                }
+            });
+        }
+        Err(e) => {
+            tracing::warn!("failed to listen for Ctrl-C: {e}");
+            std::future::pending::<()>().await;
+        }
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::path::Path;
 
+    #[test]
+    fn download_args_includes_newline_and_preserves_os_paths() {
+        let deno = Path::new("/opt/deno");
+        let archive = Path::new("/tmp/archives/foo.archive");
+        let out = Path::new("/tmp/out dir");
+        let args = download_args(deno, archive, out);
+
+        assert!(
+            args.iter().any(|a| a == "--newline"),
+            "missing --newline: {args:?}"
+        );
+        assert!(
+            args.iter().any(|a| a == "deno:/opt/deno"),
+            "lossy or missing js-runtime: {args:?}"
+        );
+        assert!(
+            args.iter().any(|a| a.as_os_str() == archive.as_os_str()),
+            "archive path not passed as OsStr: {args:?}"
+        );
+        assert!(
+            args.iter().any(|a| a.as_os_str() == out.as_os_str()),
+            "output dir not passed as OsStr: {args:?}"
+        );
+        assert!(
+            !args
+                .iter()
+                .any(|a| a.to_string_lossy().contains('\u{FFFD}'))
+        );
+    }
+
+    #[cfg(unix)]
     #[tokio::test]
-    async fn download_process_streams_version_when_yt_dlp_present() {
-        if which::which("yt-dlp").is_err() {
-            return;
-        }
-        let mut child = YtDlp::new_multiple(Vec::new())
-            .arg("--version")
-            .download_process()
+    async fn run_download_success_with_fake_binary() {
+        run_download(
+            "/bin/sh",
+            [
+                OsString::from("-c"),
+                OsString::from("echo '[download]  12.3% of 50.00MiB at 1.00MiB/s ETA 00:50'"),
+            ],
+            std::future::pending::<()>(),
+        )
+        .await
+        .expect("fake success");
+    }
+
+    #[cfg(unix)]
+    #[tokio::test]
+    async fn run_download_nonzero_attaches_stderr_tail() {
+        let err = run_download(
+            "/bin/sh",
+            [
+                OsString::from("-c"),
+                OsString::from("echo 'ERROR: boom' >&2; exit 2"),
+            ],
+            std::future::pending::<()>(),
+        )
+        .await
+        .expect_err("expected failure");
+        let msg = format!("{err:#}");
+        assert!(msg.contains("ERROR: boom"), "{msg}");
+        assert!(msg.contains("status Some(2)"), "{msg}");
+    }
+
+    #[cfg(unix)]
+    #[tokio::test]
+    async fn run_download_cancel_returns_err() {
+        let (tx, rx) = tokio::sync::oneshot::channel();
+        let err = tokio::time::timeout(
+            std::time::Duration::from_secs(5),
+            run_download(
+                "/bin/sh",
+                [OsString::from("-c"), OsString::from("sleep 30")],
+                async {
+                    let _ = rx.await;
+                },
+            ),
+        );
+        tx.send(()).expect("send cancel");
+        let err = err
             .await
-            .expect("download_process --version");
-        let mut lines = Vec::new();
-        while let Some(line) = child.next_line().await.expect("next_line") {
-            lines.push(line);
-        }
-        child.wait().await.expect("wait");
-        assert!(!lines.is_empty(), "expected yt-dlp --version stdout");
+            .expect("cancel timed out")
+            .expect_err("cancelled download should be Err");
+        let msg = format!("{err:#}");
+        assert!(
+            msg.contains("download cancelled"),
+            "production mapping missing: {msg}"
+        );
     }
 }

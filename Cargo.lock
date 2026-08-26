@@ -436,6 +436,7 @@ dependencies = [
  "chrono",
  "clap",
  "comfy-table",
+ "libc",
  "regex",
  "tempfile",
  "tokio",
