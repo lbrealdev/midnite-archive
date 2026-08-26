@@ -1,8 +1,8 @@
 # yt-dlp Rust Integration
 
-Research note for replacing the direct `std::process::Command` calls in
+Research note behind replacing the `std::process::Command` download path in
 `src/yt_dlp.rs` with a maintained Rust API while keeping yt-dlp as the download
-engine.
+engine. Kept as the decision record; see [Status](#status) for what shipped.
 
 ## Status
 
@@ -11,6 +11,7 @@ non-optional. The optional Cargo feature and the Command adapter module
 have been removed. Media downloads (`download_from_url` / `download_from_file`)
 use a midnite-owned tokio runner (`src/backend/process.rs`); generate and
 comments use buffered `ytd-rs` `download()`.
+Backend selection go/no-go: the `poc/` bake-off selected `ytd-rs` on 2026-07-14 (see [`poc/RESULTS.md`](../poc/RESULTS.md)); MIT licensing was cleared on 2026-07-25 (see [License decision](#license-decision-ytd-rs-021)). All nine [spike acceptance criteria](#spike-acceptance-criteria) are satisfied.
 
 ## Goals
 
@@ -132,7 +133,9 @@ that change.
 
 Spike criterion #9 is satisfied by this decision.
 
-## Recommendation
+## Recommendation (2026-07, historical)
+
+*Superseded by [Status](#status); retained as the pre-migration decision record.*
 
 Start with a time-boxed integration spike for `ytd-rs`, behind a
 midnite-archive-owned backend boundary. It best preserves the current yt-dlp
@@ -147,7 +150,7 @@ currently fails crates.io resolution (`lofty` yanked); PoC used `=2.1.0`.
 
 **Pre-migration baseline (2026-07-23):** compile time, binary size, and dependency
 weight for current `midnite-archive` vs both PoCs are recorded in
-[`poc/BASELINE.md`](../poc/BASELINE.md). Re-run after the production adapter lands.
+[`poc/BASELINE.md`](../poc/BASELINE.md). Post-integration re-measure is tracked in [#72](https://github.com/lbrealdev/midnite-archive/issues/72).
 
 Do not expose `ytd-rs` types from the CLI or domain modules. Define
 midnite-archive request, result, and progress types, then adapt internally:
@@ -170,8 +173,8 @@ and the project explicitly accepts GPL-3.0.
 
 ## Spike acceptance criteria
 
-The preferred candidate must demonstrate all of the following before replacing
-`src/yt_dlp.rs`:
+The preferred candidate had to demonstrate all of the following before replacing
+the Command download path in `src/yt_dlp.rs`. All nine are now satisfied:
 
 1. Generate a flat channel list and apply `--match-title`.
    **Done (2026-08-17):** [#69](https://github.com/lbrealdev/midnite-archive/issues/69).
