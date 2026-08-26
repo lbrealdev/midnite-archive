@@ -1,23 +1,30 @@
-//! Midnite-owned yt-dlp stdout events (issue #71).
+//! Midnite-owned yt-dlp output events (issue #71).
 //!
 //! Classification is independent of `ytd-rs` so unit tests run on the default
-//! feature set. The ytd-rs adapter streams lines and emits these via `tracing`.
+//! feature set. Streaming download paths emit these via `tracing`.
 
-/// A classified yt-dlp stdout line.
+/// A classified yt-dlp stdout or stderr line.
 #[derive(Debug, Clone, PartialEq)]
 pub enum YtDlpEvent {
+    /// A line whose trimmed start is `ERROR:`.
+    Error { raw: String },
     /// A download-progress line (`[download]` plus a `%`).
     Progress { raw: String, percent: Option<f32> },
-    /// Any other stdout line (destination, archive skip, merger, …).
+    /// Any other line (destination, archive skip, merger, …).
     Log { raw: String },
 }
 
-/// Classify a single yt-dlp stdout line.
+/// Classify a single yt-dlp stdout or stderr line.
 ///
-/// Progress requires both `[download]` and `%`. Percent is parsed from the
-/// first `N%` / `N.N%` token when present.
+/// Precedence: `Error` (trimmed start is `ERROR:`) → `Progress` (`[download]`
+/// and `%`) → `Log`. Percent is parsed from the first `N%` / `N.N%` token
+/// when present.
 pub fn classify_yt_dlp_line(line: &str) -> YtDlpEvent {
-    if line.contains("[download]") && line.contains('%') {
+    if line.trim_start().starts_with("ERROR:") {
+        YtDlpEvent::Error {
+            raw: line.to_string(),
+        }
+    } else if line.contains("[download]") && line.contains('%') {
         YtDlpEvent::Progress {
             raw: line.to_string(),
             percent: parse_download_percent(line),
@@ -38,12 +45,16 @@ fn parse_download_percent(line: &str) -> Option<f32> {
     line[start..end].parse().ok()
 }
 
-/// Classify a stdout line and emit it via `tracing` (`info` for progress, `debug` for log).
+/// Classify a stdout line and emit it via `tracing` (`error` for error,
+/// `info` for progress, `debug` for log).
 ///
 /// Returns the event so the stream loop and unit tests share the same path.
 pub fn classify_and_emit(line: &str) -> YtDlpEvent {
     let event = classify_yt_dlp_line(line);
     match &event {
+        YtDlpEvent::Error { raw } => {
+            tracing::error!("{}", raw);
+        }
         YtDlpEvent::Progress { raw, percent } => {
             if let Some(percent) = percent {
                 tracing::info!(percent, "{}", raw);
@@ -58,6 +69,28 @@ pub fn classify_and_emit(line: &str) -> YtDlpEvent {
     event
 }
 
+/// Classify a stderr line and emit it via `tracing` (`error` for error,
+/// `info` for progress, `warn` for log).
+pub fn classify_and_emit_stderr(line: &str) -> YtDlpEvent {
+    let event = classify_yt_dlp_line(line);
+    match &event {
+        YtDlpEvent::Error { raw } => {
+            tracing::error!("{}", raw);
+        }
+        YtDlpEvent::Progress { raw, percent } => {
+            if let Some(percent) = percent {
+                tracing::info!(percent, "{}", raw);
+            } else {
+                tracing::info!("{}", raw);
+            }
+        }
+        YtDlpEvent::Log { raw } => {
+            tracing::warn!("{}", raw);
+        }
+    }
+    event
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -65,7 +98,7 @@ mod tests {
     fn percent_of(event: &YtDlpEvent) -> Option<f32> {
         match event {
             YtDlpEvent::Progress { percent, .. } => *percent,
-            YtDlpEvent::Log { .. } => None,
+            YtDlpEvent::Error { .. } | YtDlpEvent::Log { .. } => None,
         }
     }
 
@@ -112,8 +145,42 @@ mod tests {
     }
 
     #[test]
+    fn error_prefix_is_error() {
+        let line = "ERROR: unable to download video";
+        assert_eq!(
+            classify_yt_dlp_line(line),
+            YtDlpEvent::Error {
+                raw: line.to_string()
+            }
+        );
+    }
+
+    #[test]
+    fn error_prefix_after_whitespace_is_error() {
+        let line = "  ERROR: unable to download video";
+        assert_eq!(
+            classify_yt_dlp_line(line),
+            YtDlpEvent::Error {
+                raw: line.to_string()
+            }
+        );
+    }
+
+    #[test]
+    fn error_precedes_progress() {
+        let line = "ERROR: [download]  12.3% of 50.00MiB";
+        assert_eq!(
+            classify_yt_dlp_line(line),
+            YtDlpEvent::Error {
+                raw: line.to_string()
+            }
+        );
+    }
+
+    #[test]
     fn classify_and_emit_matches_classify_on_fixtures() {
         let lines = [
+            "ERROR: unable to download video",
             "[download]  12.3% of 50.00MiB at 1.00MiB/s ETA 00:50",
             "[download] Destination: foo.mp4",
             "[download] foo has already been recorded in the archive",
@@ -121,8 +188,9 @@ mod tests {
         ];
         for line in lines {
             assert_eq!(classify_and_emit(line), classify_yt_dlp_line(line));
+            assert_eq!(classify_and_emit_stderr(line), classify_yt_dlp_line(line));
         }
-        let progress = classify_and_emit(lines[0]);
+        let progress = classify_and_emit(lines[1]);
         let percent = percent_of(&progress).expect("percent");
         assert!((percent - 12.3).abs() < 1e-4, "percent={percent}");
     }

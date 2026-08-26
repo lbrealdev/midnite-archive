@@ -19,6 +19,8 @@ pub mod command;
 pub mod events;
 
 #[cfg(feature = "ytd-rs-backend")]
+pub(crate) mod process;
+#[cfg(feature = "ytd-rs-backend")]
 pub mod ytdrs;
 
 #[cfg(feature = "ytd-rs-backend")]
