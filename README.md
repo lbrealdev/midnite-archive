@@ -35,13 +35,15 @@ midnite-archive <COMMAND>
 
 ### Commands
 
-| Command                | Description                                 |
-|------------------------|---------------------------------------------|
-| `generate <channel>`   | Generate video list from YouTube channel    |
-| `download <input>`     | Download videos from list file or URL       |
-| `comments <list-file>` | Download comments from video list           |
-| `rename <directory>`   | Rename video files (sanitize special chars) |
-| `doctor`               | Check yt-dlp / ffmpeg / deno on PATH        |
+| Command                | Description                                          |
+|------------------------|------------------------------------------------------|
+| `generate <channel>`   | Generate video list from YouTube channel             |
+| `download <input>`     | Download videos from list file or URL                |
+| `comments <list-file>` | Download comments from video list                    |
+| `archive list`         | List channel archives and the downloads archive      |
+| `archive show <name>`  | Print ids recorded for a channel or `downloads`      |
+| `rename <directory>`   | Rename video files (sanitize special chars)          |
+| `doctor`               | Check yt-dlp / ffmpeg / deno on PATH                 |
 
 ### Examples
 
@@ -60,6 +62,12 @@ midnite-archive download "https://www.youtube.com/watch?v=VIDEO_ID"
 
 # Download comments
 midnite-archive comments severo12/lists/severo12-list-url-*.txt
+
+# List archives in the current directory
+midnite-archive archive list
+
+# Show ids already downloaded for a channel
+midnite-archive archive show severo12
 
 # Preview renames (dry-run)
 midnite-archive rename -d severo12/videos

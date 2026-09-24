@@ -1,9 +1,11 @@
+mod archive;
 mod comments;
 mod doctor;
 mod download;
 mod generate;
 mod rename;
 
+pub use archive::{execute_list as archive_list, execute_show as archive_show};
 pub use comments::execute as comments;
 pub use doctor::execute as doctor;
 pub use download::execute as download;
@@ -44,6 +46,11 @@ pub enum Commands {
         /// File containing YouTube URLs
         list_file: PathBuf,
     },
+    /// List download archives or show the ids in one archive
+    Archive {
+        #[command(subcommand)]
+        command: ArchiveCommands,
+    },
     /// Rename video files (sanitize special characters)
     Rename {
         /// Directory containing video files
@@ -60,6 +67,17 @@ pub enum Commands {
     },
     /// Check that required external tools are installed and on PATH
     Doctor,
+}
+
+#[derive(Subcommand)]
+pub enum ArchiveCommands {
+    /// List channel archives and the downloads archive in the current directory
+    List,
+    /// Print archive lines for a channel or for downloads
+    Show {
+        /// Channel directory name, or `downloads`
+        name: String,
+    },
 }
 
 const ABOUT: &str = "Midnite Archive CLI";

@@ -14,7 +14,9 @@
 //! the direct child only (no job objects).
 
 use crate::backend::process::{RunOutcome, run_streaming};
-use crate::backend::{YtDlpBackend, ensure_archive_parent, list_archive_path, url_archive_path};
+use crate::backend::{
+    YtDlpBackend, ensure_archive_parent, materialize_channel_archive, url_archive_path,
+};
 use crate::types::{Channel, Video};
 use crate::yt_dlp::parse_channel_list_output;
 use anyhow::{Context, Result, bail};
@@ -83,8 +85,7 @@ impl YtDlpBackend for YtdRsBackend {
     ) -> Result<()> {
         let deno_path = which::which("deno").context("Failed to find deno executable path")?;
 
-        let archive_file = list_archive_path(output_dir, list_file);
-        ensure_archive_parent(&archive_file);
+        let archive_file = materialize_channel_archive(output_dir)?;
         tracing::info!("Using download archive: {}", archive_file.display());
 
         let mut args = download_args(&deno_path, &archive_file, output_dir);

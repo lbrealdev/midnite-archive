@@ -2,7 +2,7 @@
 
 use anyhow::Result;
 use clap::Parser;
-use midnite_archive::cli::{Cli, Commands};
+use midnite_archive::cli::{ArchiveCommands, Cli, Commands};
 use std::process;
 use tracing_subscriber::EnvFilter;
 
@@ -42,6 +42,16 @@ fn run() -> Result<()> {
             tracing::debug!("Executing comments command with file: {:?}", list_file);
             midnite_archive::cli::comments(&list_file)?;
         }
+        Commands::Archive { command } => match command {
+            ArchiveCommands::List => {
+                tracing::debug!("Executing archive list");
+                midnite_archive::cli::archive_list()?;
+            }
+            ArchiveCommands::Show { name } => {
+                tracing::debug!("Executing archive show for {name}");
+                midnite_archive::cli::archive_show(&name)?;
+            }
+        },
         Commands::Rename {
             directory,
             recursive,
