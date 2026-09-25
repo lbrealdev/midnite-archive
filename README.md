@@ -25,7 +25,13 @@ midnite-archive doctor
 curl -fsSL https://raw.githubusercontent.com/lbrealdev/midnite-archive/main/scripts/ma-installer.sh | bash
 ```
 
-Installs the latest release binary to `~/.local/bin` on Linux x86_64. yt-dlp, ffmpeg, and deno are still required to use the CLI.
+Installs the latest release binary to `~/.local/bin` on Linux x86_64. Pass `--version` to install a specific release. A leading `v` is optional (`2.4` and `v2.4`, or `0.2.0` and `v0.2.0`):
+
+```shell
+bash scripts/ma-installer.sh --version v0.2.0
+```
+
+yt-dlp, ffmpeg, and deno are still required to use the CLI.
 
 ### Build
 

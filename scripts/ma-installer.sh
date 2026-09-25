@@ -8,16 +8,20 @@ LATEST_URL="https://github.com/${REPO}/releases/latest"
 
 usage() {
   cat <<EOF
-Usage: ma-installer.sh [--help] [--version]
+Usage: ma-installer.sh [--help] [--version VERSION]
 
-Download the latest ${BIN_NAME} release binary and install it to
+Download a ${BIN_NAME} release binary and install it to
 \${PREFIX:-\$HOME/.local/bin}.
+
+With no options, install the latest release. --version installs that
+release. A leading v is optional: 2.4 and v2.4 are the same tag, and
+0.2.0 and v0.2.0 work the same way.
 
 Linux x86_64 only. This script installs the CLI binary and nothing else.
 
 Options:
-  --help       Show this help and exit
-  --version    Print the latest release version and exit
+  --help             Show this help and exit
+  --version VERSION  Install VERSION instead of the latest release
 EOF
 }
 
@@ -28,6 +32,15 @@ die() {
 
 need() {
   command -v "$1" >/dev/null 2>&1 || die "required command not found: $1"
+}
+
+normalize_version() {
+  local version="${1#v}"
+  if [[ ! "$version" =~ ^[0-9]+\.[0-9]+(\.[0-9]+)?([.-][0-9A-Za-z.]+)?$ ]]; then
+    printf 'Error: invalid version: %s\n' "$1" >&2
+    return 1
+  fi
+  printf '%s\n' "$version"
 }
 
 resolve_version() {
@@ -60,8 +73,10 @@ on_path() {
 }
 
 install_binary() {
-  local version dest_dir url tmp
-  version="$(resolve_version)"
+  local version="${1:-}" dest_dir url tmp
+  if [[ -z "$version" ]]; then
+    version="$(resolve_version)"
+  fi
   dest_dir="${PREFIX:-${HOME}/.local/bin}"
   url="https://github.com/${REPO}/releases/download/v${version}/${BIN_NAME}-${version}.tar.gz"
   tmp="$(mktemp -d)"
@@ -81,13 +96,24 @@ install_binary() {
 }
 
 main() {
+  local requested
   case "${1:-}" in
     --help | -h)
       usage
       ;;
     --version)
+      if [[ -z "${2:-}" ]]; then
+        die "missing version: ma-installer.sh --version 0.2.0"
+      fi
+      if [[ -n "${3:-}" ]]; then
+        die "unknown option: $3"
+      fi
       need curl
-      resolve_version
+      need tar
+      need install
+      require_linux_x86_64
+      requested="$(normalize_version "$2")" || exit 1
+      install_binary "$requested"
       ;;
     "")
       need curl
