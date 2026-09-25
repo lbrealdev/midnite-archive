@@ -1,4 +1,4 @@
-use crate::backend::list_archive_path;
+use crate::backend::{count_ids_in_archive, read_archive_lines};
 use crate::types::ListFile;
 use crate::yt_dlp;
 use anyhow::{Context, Result, bail};
@@ -74,7 +74,7 @@ fn handle_file_download(input: &str) -> Result<()> {
     tracing::info!("Downloading from {} list...", file_stem);
 
     // Read videos and count totals for tracking stats
-    let total_videos = match list_file.read_videos() {
+    let videos = match list_file.read_videos() {
         Ok((videos, unparseable)) => {
             let count = videos.len();
             if !unparseable.is_empty() {
@@ -87,69 +87,69 @@ fn handle_file_download(input: &str) -> Result<()> {
             if videos.len() > 5 {
                 tracing::info!("  ... and {} more", videos.len() - 5);
             }
-            count
+            videos
         }
         Err(e) => {
             tracing::warn!("Could not parse video list: {}", e);
-            0
+            Vec::new()
         }
     };
 
-    // Check archive file for download tracking stats
-    let archive_file = list_archive_path(&download_dir, &list_file.path);
+    let total_videos = videos.len();
+    let list_ids: Vec<&str> = videos.iter().map(|video| video.id.as_ref()).collect();
+    let archive_dir = download_dir.join(".archive");
 
-    let downloaded_count = if archive_file.exists() {
-        match std::fs::read_to_string(&archive_file) {
-            Ok(content) => content.lines().filter(|line| !line.is_empty()).count(),
-            Err(_) => 0,
-        }
-    } else {
-        0
-    };
-
-    let remaining = total_videos.saturating_sub(downloaded_count);
-
-    // Display tracking statistics
-    if total_videos > 0 {
+    // Already downloaded = ids from this list that appear in the channel archive
+    // (union of every *.archive), not the raw line count of one list-stem file.
+    let already_downloaded = if total_videos > 0 {
+        let lines = read_archive_lines(&archive_dir).with_context(|| {
+            format!(
+                "Failed to read download archive in {}",
+                download_dir.display()
+            )
+        })?;
+        let already = count_ids_in_archive(list_ids.iter().copied(), &lines);
+        let remaining = total_videos.saturating_sub(already);
         println!("📊 Download Statistics:");
         println!("   Total videos: {}", total_videos);
-        println!("   Already downloaded: {}", downloaded_count);
+        println!("   Already downloaded: {}", already);
         println!("   Remaining to download: {}", remaining);
         if remaining > 0 {
             println!();
         }
-    }
+        already
+    } else {
+        0
+    };
 
     tracing::info!("Starting download...");
     yt_dlp::download_from_file(
         &list_file.path,
         &download_dir,
         total_videos,
-        downloaded_count,
+        already_downloaded,
     )
     .with_context(|| "Download failed")?;
 
-    // Check archive again after download
-    let new_downloaded_count = if archive_file.exists() {
-        match std::fs::read_to_string(&archive_file) {
-            Ok(content) => content.lines().filter(|line| !line.is_empty()).count(),
-            Err(_) => downloaded_count,
+    if total_videos > 0 {
+        let lines = read_archive_lines(&archive_dir).with_context(|| {
+            format!(
+                "Failed to read download archive in {}",
+                download_dir.display()
+            )
+        })?;
+        let downloaded_after = count_ids_in_archive(list_ids.iter().copied(), &lines);
+        let newly_downloaded = downloaded_after.saturating_sub(already_downloaded);
+        if newly_downloaded > 0 {
+            println!(
+                "✓ Downloaded {} new video(s) this session",
+                newly_downloaded
+            );
+            println!(
+                "   Progress: {}/{} videos complete",
+                downloaded_after, total_videos
+            );
         }
-    } else {
-        downloaded_count
-    };
-
-    let newly_downloaded = new_downloaded_count.saturating_sub(downloaded_count);
-
-    if total_videos > 0 && newly_downloaded > 0 {
-        println!(
-            "✓ Downloaded {} new video(s) this session",
-            newly_downloaded
-        );
-        println!(
-            "   Progress: {}/{} videos complete",
-            new_downloaded_count, total_videos
-        );
     }
 
     Ok(())

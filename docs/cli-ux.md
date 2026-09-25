@@ -28,7 +28,7 @@ Per channel (handle or `UC…` id as directory name):
 ```text
 {channel}/
   lists/      # generate output
-  videos/     # download output (+ .archive/)
+  videos/     # download output (+ .archive/videos.archive)
   comments/   # comments output
 ```
 
@@ -82,8 +82,12 @@ With `-v`, also expect channel resolution, fetch progress, and parse counts as `
 
 **Layout:**
 
-- List file → `{channel}/videos/` with `.archive/{list-stem}.archive`
+- List file → `{channel}/videos/` with one archive, `.archive/videos.archive`
 - Single URL → `downloads/` with `.archive/downloads.archive`
+
+Older `*.archive` files in the same directory still count. `archive list` and `archive show` read the union and do not rewrite. A list download folds any missing lines into `videos.archive` and leaves the old files on disk.
+
+**Already downloaded** is how many ids in the current list already appear in that channel archive, not the line count of one list file's archive.
 
 **Default success (stdout) for list downloads:**
 
@@ -99,6 +103,26 @@ With `-v`, also expect channel resolution, fetch progress, and parse counts as `
 ```
 
 Single-URL runs may only print `✓ Done!`.
+
+### `archive`
+
+**Input:** none for `list`. `show` takes a channel directory name or `downloads`.
+
+**Default success (stdout):**
+
+```text
+$ midnite-archive archive list
+✓ 2 archives
+  severo12: severo12/videos/.archive (120 ids)
+  downloads: downloads/.archive (3 ids)
+
+$ midnite-archive archive show severo12
+✓ 2 ids in severo12
+  youtube abcdefghijk
+  youtube zyxwvutsrqp
+```
+
+A missing channel directory or a missing `downloads` directory exits `1`. An existing channel with no archive yet prints `✓ 0 ids`.
 
 ### `comments`
 
