@@ -4,11 +4,8 @@ Rust CLI for archiving YouTube content of the reggae band **Midnite/Akae Beka** 
 
 Uses yt-dlp (driven through the `ytd-rs` Rust wrapper) with External JavaScript (EJS) support for reliable downloads despite YouTube's frequent changes.
 
-## Installation
+## Requirements
 
-### Requirements
-
-- [Rust](https://rustup.rs/) (latest stable)
 - [yt-dlp](https://github.com/yt-dlp/yt-dlp)
 - [ffmpeg](https://ffmpeg.org/)
 - [deno](https://deno.land/) (required for `download` / EJS)
@@ -19,21 +16,27 @@ Verify with:
 midnite-archive doctor
 ```
 
-### Install the binary
+## Install
+
+### Linux
 
 ```shell
 curl -fsSL https://raw.githubusercontent.com/lbrealdev/midnite-archive/main/scripts/ma-installer.sh | bash
 ```
 
-Installs the latest release binary to `~/.local/bin` on Linux x86_64. Pass `--version` to install a specific release. A leading `v` is optional (`2.4` and `v2.4`, or `0.2.0` and `v0.2.0`):
+Installs the latest release to `~/.local/bin` (Linux x86_64). To install a specific release, pass `--version`. A leading `v` is optional (`0.2.0` and `v0.2.0`):
 
 ```shell
-bash scripts/ma-installer.sh --version v0.2.0
+curl -fsSL https://raw.githubusercontent.com/lbrealdev/midnite-archive/main/scripts/ma-installer.sh | bash -s -- --version 0.2.0
 ```
 
-yt-dlp, ffmpeg, and deno are still required to use the CLI.
+### Windows
 
-### Build
+Windows installer is not available yet.
+
+### Build from source
+
+[Rust](https://rustup.rs/) (latest stable) is required.
 
 ```shell
 cargo build --release
